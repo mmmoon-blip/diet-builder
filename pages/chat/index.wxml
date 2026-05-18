@@ -1,0 +1,27 @@
+<view class="page">
+  <!-- 头部 -->
+  <view class="header">
+    <text class="title">💬 AI 助手</text>
+    <text class="new-chat-btn" bindtap="clearSession">新对话</text>
+  </view>
+
+  <!-- 聊天消息列表 -->
+  <scroll-view class="chat-container" scroll-y="true" scroll-top="{{scrollTop}}" bindscrolltoupper="onScrollUpper">
+    <view wx:for="{{messages}}" wx:key="id" class="message-item {{item.role}}">
+      <view class="message-avatar">{{item.role === 'user' ? '👤' : '🤍'}}</view>
+      <view class="message-content">
+        <view class="message-text">{{item.content}}</view>
+        <view class="message-time" wx:if="{{item.time}}">{{item.time}}</view>
+      </view>
+    </view>
+    <view wx:if="{{messages.length === 0}}" class="empty-hint">
+      <text>你好！我是减减，你的减肥小管家。\n有什么可以帮你的吗？</text>
+    </view>
+  </scroll-view>
+
+  <!-- 输入区域 -->
+  <view class="input-container">
+    <input class="input-field" value="{{inputText}}" bindinput="onInput" bindconfirm="sendMessage" placeholder="输入消息..." confirm-type="send" />
+    <button class="send-btn" bindtap="sendMessage" disabled="{{!inputText}}">发送</button>
+  </view>
+</view>

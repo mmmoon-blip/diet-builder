@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/index/index",
+    "pages/exercise/index",
+    "pages/diet/index",
+    "pages/chat/index",
+    "pages/knowledge/index"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#FF6B6B",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "减减 - 减肥管家",
+    "backgroundColor": "#f5f5f5"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

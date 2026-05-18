@@ -1,0 +1,28 @@
+<view class="container">
+  <view class="logo-section">
+    <view class="logo">🤍</view>
+    <view class="title">减减</view>
+    <view class="subtitle">您的减肥小管家</view>
+  </view>
+
+  <view class="login-section">
+    <!-- 微信登录按钮 - 使用 open-type 直接获取用户信息 -->
+    <button class="btn-wechat" open-type="getUserInfo" bindgetuserinfo="onGetUserInfo" hover-class="btn-hover">
+      <text class="btn-icon">💬</text>
+      <text>微信一键登录</text>
+    </button>
+
+    <view class="tips">
+      <text class="tip-text">登录即表示同意</text>
+      <text class="link" bindtap="showAgreement">《用户协议》</text>
+      <text class="tip-text">和</text>
+      <text class="link" bindtap="showPrivacy">《隐私政策》</text>
+    </view>
+  </view>
+
+  <!-- 底部说明 -->
+  <view class="footer">
+    <text class="footer-text">登录后数据将同步到云端</text>
+    <text class="footer-text">随时随地查看和管理</text>
+  </view>
+</view>

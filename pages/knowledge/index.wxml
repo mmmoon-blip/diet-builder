@@ -1,0 +1,47 @@
+<view class="page">
+  <!-- 头部 -->
+  <view class="header">
+    <text class="header-title">📚 健康知识库</text>
+    <text class="header-subtitle">专业知识，透明查阅</text>
+  </view>
+
+  <!-- 分类导航 -->
+  <view class="category-tabs">
+    <view wx:for="{{categories}}" wx:key="id" class="category-tab {{currentCategory === item.id ? 'active' : ''}}" data-id="{{item.id}}" bindtap="switchCategory">
+      <text class="tab-icon">{{item.icon}}</text>
+      <text class="tab-name">{{item.name}}</text>
+    </view>
+  </view>
+
+  <!-- 文章列表 -->
+  <scroll-view scroll-y class="article-list">
+    <view wx:for="{{articles}}" wx:key="id" class="article-item" bindtap="showArticle" data-id="{{item.id}}">
+      <view class="article-header">
+        <text class="article-title">{{item.title}}</text>
+        <text class="article-tag" wx:if="{{item.tag}}">{{item.tag}}</text>
+      </view>
+      <text class="article-summary">{{item.summary}}</text>
+      <view class="article-footer">
+        <text class="article-date">{{item.updateDate}}</text>
+        <text class="article-read">阅读 ></text>
+      </view>
+    </view>
+
+    <view wx:if="{{articles.length === 0}}" class="empty-hint">
+      <text>该分类下暂无文章</text>
+    </view>
+  </scroll-view>
+
+  <!-- 文章详情弹窗 -->
+  <view class="modal {{showArticleModal ? 'active' : ''}}" bindtap="hideArticle">
+    <view class="modal-content article-detail" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">{{currentArticle.title}}</text>
+        <text class="modal-close" bindtap="hideArticle">×</text>
+      </view>
+      <scroll-view scroll-y class="article-content">
+        <text class="content-text">{{currentArticle.content}}</text>
+      </scroll-view>
+    </view>
+  </view>
+</view>

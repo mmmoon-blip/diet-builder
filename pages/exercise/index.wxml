@@ -1,0 +1,104 @@
+<view class="page">
+  <!-- 头部 -->
+  <view class="header">
+    <view class="header-top">
+      <text class="title">🏃 运动记录</text>
+    </view>
+  </view>
+
+  <!-- 添加运动表单 -->
+  <view class="form-card">
+    <view class="form-group">
+      <text class="form-label">日期</text>
+      <picker mode="date" value="{{exerciseDate}}" bindchange="onDateChange">
+        <view class="picker-value">{{exerciseDate}}</view>
+      </picker>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">运动类型</text>
+      <view class="exercise-type-selector" bindtap="toggleExerciseDropdown">
+        <view class="picker-value">{{exerciseTypes[exerciseTypeIndex]}}</view>
+        <text class="dropdown-arrow">▼</text>
+      </view>
+      <!-- 下拉搜索列表 -->
+      <view class="exercise-dropdown" wx:if="{{showExerciseDropdown}}">
+        <input class="form-input search-input" value="{{exerciseSearch}}" bindinput="onExerciseSearchInput" placeholder="搜索运动类型..." bindblur="onSearchBlur" />
+        <scroll-view scroll-y class="dropdown-list">
+          <view wx:for="{{filteredExerciseTypes}}" wx:key="index" class="dropdown-item {{item.originalIndex === exerciseTypeIndex ? 'selected' : ''}}" bindtap="selectExerciseType" data-index="{{item.originalIndex}}">
+            {{item.name}}
+          </view>
+          <view wx:if="{{filteredExerciseTypes.length === 0}}" class="dropdown-empty">未找到匹配的运动</view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <view class="form-row">
+      <view class="form-group" style="flex:1">
+        <text class="form-label">时长 (分钟)</text>
+        <input class="form-input" type="number" value="{{duration}}" bindinput="onDurationInput" placeholder="如: 30" />
+      </view>
+      <view class="form-group" style="flex:1">
+        <text class="form-label">消耗 (kcal)</text>
+        <input class="form-input" type="number" value="{{calories}}" bindinput="onCaloriesInput" placeholder="如: 200" />
+      </view>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">时段（可选）</text>
+      <view class="form-row">
+        <picker mode="time" value="{{startTime}}" bindchange="onStartTimeChange">
+          <view class="picker-value time-picker">{{startTime || '开始时间'}}</view>
+        </picker>
+        <text style="padding: 0 10px;">至</text>
+        <picker mode="time" value="{{endTime}}" bindchange="onEndTimeChange">
+          <view class="picker-value time-picker">{{endTime || '结束时间'}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">备注（可选）</text>
+      <input class="form-input" value="{{note}}" bindinput="onNoteInput" placeholder="如: 感觉良好" />
+    </view>
+
+    <button class="save-btn" bindtap="saveExercise">保存记录</button>
+  </view>
+
+  <!-- 今日汇总 -->
+  <view class="summary-card" wx:if="{{todaySummary}}">
+    <text class="summary-title">今日汇总</text>
+    <view class="summary-row">
+      <view class="summary-item">
+        <text class="summary-value">{{todaySummary.totalDuration}}</text>
+        <text class="summary-unit">分钟</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-value">{{todaySummary.totalCalories}}</text>
+        <text class="summary-unit">kcal</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 历史记录 -->
+  <view class="history-section">
+    <view class="section-title">历史记录</view>
+    <scroll-view scroll-y class="history-scroll" bindscrolltolower="loadMoreExerciseHistory">
+      <view wx:for="{{exerciseHistory}}" wx:key="id" class="history-item">
+        <view class="history-date">{{item.recordDate}}</view>
+        <view class="history-content">
+          <text class="history-type">{{item.type}}</text>
+          <text class="history-detail">{{item.duration}}分钟 · {{item.calories}}kcal</text>
+        </view>
+        <view class="history-actions">
+          <text class="action-btn" bindtap="editExercise" data-item="{{item}}">✏️</text>
+          <text class="action-btn delete" bindtap="deleteExercise" data-id="{{item.id}}">🗑️</text>
+        </view>
+      </view>
+      <view wx:if="{{exerciseHistory.length === 0}}" class="empty-hint">
+        暂无运动记录
+      </view>
+      <view wx:if="{{exerciseHasMore}}" class="load-more">加载更多...</view>
+    </scroll-view>
+  </view>
+</view>

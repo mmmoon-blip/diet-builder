@@ -1,0 +1,91 @@
+<view class="page">
+  <!-- 头部 -->
+  <view class="header">
+    <view class="header-top">
+      <text class="title">🍽️ 饮食记录</text>
+    </view>
+  </view>
+
+  <!-- 添加饮食表单 -->
+  <view class="form-card">
+    <view class="form-group">
+      <text class="form-label">日期</text>
+      <picker mode="date" value="{{dietDate}}" bindchange="onDateChange">
+        <view class="picker-value">{{dietDate}}</view>
+      </picker>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">餐次</text>
+      <picker mode="selector" value="{{mealTypeIndex}}" range="{{mealTypes}}" bindchange="onMealTypeChange">
+        <view class="picker-value">{{mealTypes[mealTypeIndex]}}</view>
+      </picker>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">食物描述</text>
+      <input class="form-input" value="{{foods}}" bindinput="onFoodsInput" placeholder="如: 米饭、牛肉、蔬菜" />
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">卡路里 (kcal)</text>
+      <input class="form-input" type="number" value="{{calories}}" bindinput="onCaloriesInput" placeholder="可选" />
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">时段（可选）</text>
+      <view class="form-row">
+        <picker mode="time" value="{{startTime}}" bindchange="onStartTimeChange">
+          <view class="picker-value time-picker">{{startTime || '开始时间'}}</view>
+        </picker>
+        <text style="padding: 0 10px;">至</text>
+        <picker mode="time" value="{{endTime}}" bindchange="onEndTimeChange">
+          <view class="picker-value time-picker">{{endTime || '结束时间'}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">备注（可选）</text>
+      <input class="form-input" value="{{note}}" bindinput="onNoteInput" placeholder="如: 少油少盐" />
+    </view>
+
+    <button class="save-btn" bindtap="saveDiet">保存记录</button>
+  </view>
+
+  <!-- 今日汇总 -->
+  <view class="summary-card" wx:if="{{todaySummary}}">
+    <text class="summary-title">今日汇总</text>
+    <view class="summary-row">
+      <view class="summary-item">
+        <text class="summary-value">{{todaySummary.totalCalories}}</text>
+        <text class="summary-unit">kcal</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 历史记录 -->
+  <view class="history-section">
+    <view class="section-title">历史记录</view>
+    <scroll-view scroll-y class="history-scroll" bindscrolltolower="loadMoreDietHistory">
+      <view wx:for="{{dietHistory}}" wx:key="id" class="history-item">
+        <view class="history-left">
+          <view class="history-date">{{item.recordDate}}</view>
+          <view class="history-meal">{{item.mealType}}</view>
+        </view>
+        <view class="history-content">
+          <text class="history-foods">{{item.foods}}</text>
+          <text class="history-calories" wx:if="{{item.calories}}">{{item.calories}} kcal</text>
+        </view>
+        <view class="history-actions">
+          <text class="action-btn" bindtap="editDiet" data-item="{{item}}">✏️</text>
+          <text class="action-btn delete" bindtap="deleteDiet" data-id="{{item.id}}">🗑️</text>
+        </view>
+      </view>
+      <view wx:if="{{dietHistory.length === 0}}" class="empty-hint">
+        暂无饮食记录
+      </view>
+      <view wx:if="{{dietHasMore}}" class="load-more">加载更多...</view>
+    </scroll-view>
+  </view>
+</view>

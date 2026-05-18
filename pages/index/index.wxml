@@ -1,0 +1,748 @@
+<view class="page">
+  <!-- 头部 -->
+  <view class="header">
+    <view class="header-top">
+      <view class="header-left">
+        <text class="title">减减 🤍</text>
+        <text class="subtitle">您的私人定制减肥管家</text>
+      </view>
+      <view class="header-right">
+        <text class="quick-btn" bindtap="showWeightModal">⚖️</text>
+        <text class="quick-btn" bindtap="showMeasurementModal">📏</text>
+        <text class="quick-btn" bindtap="showMenstrualModal">🩸</text>
+        <text class="quick-btn" bindtap="showProfileModal">👤</text>
+      </view>
+    </view>
+    <view class="user-info-text" wx:if="{{userInfo.targetWeight || summaryLatest}}">
+      {{userInfo.nickname || '游客'}}
+      <text wx:if="{{summaryLatest}}"> | 当前 {{summaryLatest}}kg</text>
+      <text wx:if="{{userInfo.targetWeight}}"> | 目标 {{userInfo.targetWeight}}kg</text>
+      <text wx:if="{{summaryToGoal !== null && userInfo.targetWeight}}"> | 距目标 {{summaryToGoal > 0 ? summaryToGoal + 'kg' : '已达成'}}</text>
+    </view>
+    <!-- 喝水量快捷入口 -->
+    <view class="water-indicator" bindtap="showWaterModal">
+      <text class="water-icon">💧</text>
+      <text class="water-text">{{todayWater || 0}}ml</text>
+      <text class="water-goal" wx:if="{{waterGoal}}">/ {{waterGoal}}ml</text>
+    </view>
+  </view>
+
+  <!-- ============ 数据趋势图表（体重+维度合一）============ -->
+  <view class="chart-section">
+    <view class="chart-header">
+      <view class="chart-title-row">
+        <text class="chart-title">📊 数据趋势</text>
+        <view class="chart-legend" wx:if="{{activeChart === 'weight'}}">
+          <view class="legend-item"><view class="legend-dot lowest"></view>最低</view>
+          <view class="legend-item"><view class="legend-dot today"></view>今日</view>
+          <view class="legend-item"><view class="legend-dot highest"></view>最高</view>
+        </view>
+      </view>
+      <!-- 主切换tab：体重 / 维度 -->
+      <view class="chart-tabs main-tabs">
+        <text class="chart-tab {{activeChart === 'weight' ? 'active' : ''}}" data-chart="weight" bindtap="switchActiveChart">体重</text>
+        <text class="chart-tab {{activeChart === 'measurement' ? 'active' : ''}}" data-chart="measurement" bindtap="switchActiveChart">维度</text>
+      </view>
+      <!-- 体重时间筛选 -->
+      <view class="chart-tabs" wx:if="{{activeChart === 'weight'}}">
+        <text class="chart-tab {{weightChartDays === 7 ? 'active' : ''}}" data-days="7" bindtap="switchWeightChart">近7天</text>
+        <text class="chart-tab {{weightChartDays === 30 ? 'active' : ''}}" data-days="30" bindtap="switchWeightChart">近30天</text>
+        <text class="chart-tab {{weightChartDays === 90 ? 'active' : ''}}" data-days="90" bindtap="switchWeightChart">近90天</text>
+      </view>
+      <!-- 维度类型筛选 -->
+      <view class="chart-tabs" wx:if="{{activeChart === 'measurement'}}">
+        <text class="chart-tab {{measurementChartType === 'waist' ? 'active' : ''}}" data-type="waist" bindtap="switchMeasurementChart">腰围</text>
+        <text class="chart-tab {{measurementChartType === 'hip' ? 'active' : ''}}" data-type="hip" bindtap="switchMeasurementChart">臀围</text>
+        <text class="chart-tab {{measurementChartType === 'chest' ? 'active' : ''}}" data-type="chest" bindtap="switchMeasurementChart">胸围</text>
+        <text class="chart-tab {{measurementChartType === 'upperArm' ? 'active' : ''}}" data-type="upperArm" bindtap="switchMeasurementChart">大臂</text>
+        <text class="chart-tab {{measurementChartType === 'thigh' ? 'active' : ''}}" data-type="thigh" bindtap="switchMeasurementChart">大腿</text>
+      </view>
+      <!-- 维度记录数筛选 -->
+      <view class="chart-tabs" wx:if="{{activeChart === 'measurement'}}">
+        <text class="chart-tab {{measurementChartCount === 7 ? 'active' : ''}}" data-count="7" bindtap="switchMeasurementCount">近7条</text>
+        <text class="chart-tab {{measurementChartCount === 30 ? 'active' : ''}}" data-count="30" bindtap="switchMeasurementCount">近30条</text>
+        <text class="chart-tab {{measurementChartCount === 90 ? 'active' : ''}}" data-count="90" bindtap="switchMeasurementCount">近90条</text>
+      </view>
+    </view>
+
+    <!-- 体重图表 -->
+    <view wx:if="{{activeChart === 'weight'}}">
+      <!-- 图表区域 -->
+      <view class="chart-wrapper" wx:if="{{weightChartData.length > 0}}">
+        <view class="chart-y-axis">
+          <text class="y-label">{{weightChartMax}}</text>
+          <text class="y-label">{{weightChartMid}}</text>
+          <text class="y-label">{{weightChartMin}}</text>
+        </view>
+        <view class="chart-main">
+          <view class="grid-lines">
+            <view class="grid-line"></view>
+            <view class="grid-line"></view>
+            <view class="grid-line"></view>
+          </view>
+          <view class="target-line" wx:if="{{userInfo.targetWeight}}" style="bottom: {{targetLineBottom}}%">
+            <view class="target-line-inner"></view>
+            <text class="target-label">{{userInfo.targetWeight}}kg</text>
+          </view>
+          <view class="data-container">
+            <view class="line-connector">
+              <view wx:for="{{weightChartData}}" wx:key="index" class="line-segment-wrapper" style="left: {{item.xPercent}}%;bottom: {{item.yPercent}}%;"></view>
+            </view>
+            <view wx:for="{{weightChartData}}" wx:key="index" class="data-point-wrapper" style="left: {{item.xPercent}}%; bottom: {{item.yPercent}}%;" bindtap="showWeightTooltip" data-item="{{item}}">
+              <view class="data-point {{item.isToday ? 'today' : ''}} {{item.isLowest ? 'lowest' : ''}} {{item.isHighest ? 'highest' : ''}}"></view>
+              <text class="point-label" wx:if="{{weightChartDays <= 30 || index % 7 === 0 || item.isToday}}">{{item.weight}}kg</text>
+            </view>
+          </view>
+        </view>
+        <view class="chart-x-axis">
+          <text wx:for="{{weightChartLabels}}" wx:key="index" class="x-label" style="left: {{item.xPercent}}%;">{{item.label}}</text>
+        </view>
+      </view>
+      <view class="chart-empty" wx:elif="{{weightChartData.length === 0 && weightChartLoaded}}">
+        <view class="empty-icon">⚖️</view>
+        <text class="empty-text">暂无体重数据</text>
+        <text class="empty-hint">点击下方按钮记录</text>
+      </view>
+      <view class="chart-loading" wx:if="{{!weightChartLoaded}}">
+        <view class="loading-spinner"></view><text>加载中...</text>
+      </view>
+      <view class="stats-cards" wx:if="{{weightChartData.length > 0}}">
+        <view class="stat-card">
+          <view class="stat-value {{summaryChange < 0 ? 'down' : (summaryChange > 0 ? 'up' : '')}}">{{summaryChange !== null ? (summaryChange < 0 ? summaryChange + 'kg' : (summaryChange > 0 ? '+' + summaryChange + 'kg' : '0kg')) : '--'}}</view>
+          <view class="stat-label">累计变化(初始{{userInfo.initialWeight}}kg)</view>
+        </view>
+        <view class="stat-card highlight">
+          <view class="stat-value">{{summaryLatest}}kg</view>
+          <view class="stat-label">最新体重</view>
+        </view>
+        <view class="stat-card">
+          <view class="stat-value {{summaryChangeFromLast < 0 ? 'down' : (summaryChangeFromLast > 0 ? 'up' : '')}}">{{summaryChangeFromLast !== null ? (summaryChangeFromLast < 0 ? summaryChangeFromLast + 'kg' : (summaryChangeFromLast > 0 ? '+' + summaryChangeFromLast + 'kg' : '0kg')) : '--'}}</view>
+          <view class="stat-label">距上次</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 维度图表 -->
+    <view wx:if="{{activeChart === 'measurement'}}">
+      <view class="chart-wrapper" wx:if="{{measurementChartData.length > 0}}">
+        <view class="chart-y-axis">
+          <text class="y-label">{{measurementChartMin}}</text>
+          <text class="y-label">{{measurementChartMid}}</text>
+          <text class="y-label">{{measurementChartMax}}</text>
+        </view>
+        <view class="chart-main">
+          <view class="grid-lines">
+            <view class="grid-line"></view>
+            <view class="grid-line"></view>
+            <view class="grid-line"></view>
+          </view>
+          <view class="data-container">
+            <view class="line-connector measurement">
+              <view wx:for="{{measurementChartData}}" wx:key="index" class="line-segment-wrapper" style="left: {{item.xPercent}}%;bottom: {{item.yPercent}}%;"></view>
+            </view>
+            <view wx:for="{{measurementChartData}}" wx:key="index" class="data-point-wrapper" style="left: {{item.xPercent}}%; bottom: {{item.yPercent}}%;" bindtap="showMeasurementTooltip" data-item="{{item}}">
+              <view class="data-point measurement {{item.isLowest ? 'lowest' : ''}} {{item.isHighest ? 'highest' : ''}}"></view>
+              <text class="point-label">{{item.value}}{{measurementChartUnit}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="chart-x-axis">
+          <text wx:for="{{measurementChartLabels}}" wx:key="index" class="x-label" style="left: {{item.xPercent}}%;">{{item.label}}</text>
+        </view>
+      </view>
+      <view class="chart-empty" wx:elif="{{measurementChartData.length === 0 && measurementChartLoaded}}">
+        <view class="empty-icon">📏</view>
+        <text class="empty-text">暂无维度数据</text>
+        <text class="empty-hint">点击下方按钮记录</text>
+      </view>
+      <view class="chart-loading" wx:if="{{!measurementChartLoaded}}">
+        <view class="loading-spinner"></view><text>加载中...</text>
+      </view>
+      <view class="stats-cards" wx:if="{{measurementChartData.length > 0}}">
+        <view class="stat-card highlight">
+          <view class="stat-value">{{measurementStats.current}}{{measurementChartUnit}}</view>
+          <view class="stat-label">当前{{measurementChartTypeName}}</view>
+        </view>
+        <view class="stat-card">
+          <view class="stat-value {{measurementStats.change <= 0 ? 'down' : 'up'}}">{{measurementStats.change >= 0 ? '+' : ''}}{{measurementStats.change}}{{measurementChartUnit}}</view>
+          <view class="stat-label">累计变化</view>
+        </view>
+        <view class="stat-card">
+          <view class="stat-value">{{measurementStats.avg}}{{measurementChartUnit}}</view>
+          <view class="stat-label">平均值</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="function-grid">
+    <view class="function-item" bindtap="goToPage" data-page="/pages/chat/index">
+      <view class="function-icon">💬</view>
+      <text class="function-label">AI助手</text>
+    </view>
+    <view class="function-item" bindtap="showWeightModal">
+      <view class="function-icon">⚖️</view>
+      <text class="function-label">体重记录</text>
+    </view>
+    <view class="function-item" bindtap="goToPage" data-page="/pages/diet/index">
+      <view class="function-icon">🍽️</view>
+      <text class="function-label">饮食记录</text>
+    </view>
+    <view class="function-item" bindtap="goToPage" data-page="/pages/exercise/index">
+      <view class="function-icon">🏃</view>
+      <text class="function-label">运动记录</text>
+    </view>
+    <view class="function-item" bindtap="showMeasurementModal">
+      <view class="function-icon">📏</view>
+      <text class="function-label">维度记录</text>
+    </view>
+    <view class="function-item" bindtap="showMenstrualModal">
+      <view class="function-icon">🩸</view>
+      <text class="function-label">经期记录</text>
+    </view>
+    <view class="function-item" bindtap="goToPage" data-page="/pages/knowledge/index">
+      <view class="function-icon">📚</view>
+      <text class="function-label">知识库</text>
+    </view>
+    <view class="function-item" bindtap="showBfpModal">
+      <view class="function-icon">📊</view>
+      <text class="function-label">体脂估算</text>
+    </view>
+    <view class="function-item" bindtap="showProfileModal">
+      <view class="function-icon">👤</view>
+      <text class="function-label">个人档案</text>
+    </view>
+  </view>
+
+  <!-- ============ 喝水量弹窗 ============ -->
+  <view class="modal {{showWaterModal ? 'active' : ''}}" bindtap="hideWaterModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">💧 喝水量记录</text>
+        <text class="modal-close" bindtap="hideWaterModal">×</text>
+      </view>
+      <view class="water-progress">
+        <text class="water-current">{{todayWater || 0}}ml</text>
+        <text class="water-divider">/</text>
+        <text class="water-goal">{{waterGoal || 2000}}ml</text>
+      </view>
+      <view class="water-progress-bar">
+        <view class="water-progress-fill" style="width: {{todayWater && waterGoal ? (todayWater / waterGoal * 100) + '%' : '0%'}}"></view>
+      </view>
+      <view class="water-quick-btns">
+        <view class="water-quick-btn" bindtap="addWater" data-amount="200">+200ml</view>
+        <view class="water-quick-btn" bindtap="addWater" data-amount="300">+300ml</view>
+        <view class="water-quick-btn" bindtap="addWater" data-amount="500">+500ml</view>
+      </view>
+      <view class="form-group">
+        <text class="form-label">自定义添加 (ml)</text>
+        <view class="water-custom-input">
+          <input class="form-input" type="number" value="{{customWaterAmount}}" bindinput="onCustomWaterInput" placeholder="输入喝水量" />
+          <button class="save-btn small" bindtap="addCustomWater">添加</button>
+        </view>
+      </view>
+      <view class="form-group">
+        <text class="form-label">每日目标 (ml)</text>
+        <view class="water-custom-input">
+          <input class="form-input" type="number" value="{{waterGoal}}" bindinput="onWaterGoalInput" placeholder="设置目标" />
+          <button class="save-btn small" bindtap="saveWaterGoal">保存</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ============ 体脂估算弹窗 ============ -->
+  <view class="modal {{showBfpModal ? 'active' : ''}}" bindtap="hideBfpModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">📊 体脂估算</text>
+        <text class="modal-close" bindtap="hideBfpModal">×</text>
+      </view>
+      <view class="bfp-info">
+        <text class="bfp-desc">根据您的身体数据估算体脂率</text>
+      </view>
+      <view class="form-group">
+        <text class="form-label">腰围 (cm)</text>
+        <input class="form-input" type="digit" value="{{bfpWaist}}" bindinput="onBfpWaistInput" placeholder="请输入腰围" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">臀围 (cm)</text>
+        <input class="form-input" type="digit" value="{{bfpHip}}" bindinput="onBfpHipInput" placeholder="请输入臀围" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">体重 (kg)</text>
+        <input class="form-input" type="digit" value="{{bfpWeight}}" bindinput="onBfpWeightInput" placeholder="请输入体重" />
+      </view>
+      <button class="save-btn" bindtap="calculateBfp">计算体脂率</button>
+      <view class="bfp-result" wx:if="{{bfpResult}}">
+        <view class="bfp-value">{{bfpResult}}%</view>
+        <view class="bfp-category">{{bfpCategory}}</view>
+        <view class="bfp-advice">{{bfpAdvice}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ============ 体重弹窗 ============ -->
+  <view class="modal {{showWeightModal ? 'active' : ''}}" bindtap="hideWeightModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">⚖️ 体重记录</text>
+        <text class="modal-close" bindtap="hideWeightModal">×</text>
+      </view>
+
+      <!-- 今日记录 -->
+      <view class="section-title">📝 今日记录</view>
+      <view class="form-group">
+        <text class="form-label">日期</text>
+        <picker mode="date" value="{{weightDate}}" bindchange="onWeightDateChange">
+          <view class="picker-value">{{weightDate}}</view>
+        </picker>
+      </view>
+      <view class="form-group">
+        <text class="form-label">体重 (kg)</text>
+        <input class="form-input" type="digit" value="{{weight}}" bindinput="onWeightInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">睡眠开始</text>
+        <picker mode="time" value="{{weightSleepStart}}" bindchange="onSleepStartChange">
+          <view class="picker-value">{{weightSleepStart || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="form-group">
+        <text class="form-label">起床时间</text>
+        <picker mode="time" value="{{weightSleepEnd}}" bindchange="onSleepEndChange">
+          <view class="picker-value">{{weightSleepEnd || '请选择'}}</view>
+        </picker>
+      </view>
+      <button class="save-btn" bindtap="saveWeight">{{editingWeightId ? '更新记录' : '记录体重'}}</button>
+
+      <!-- 导入历史记录 -->
+      <view class="import-toggle" bindtap="toggleImport">
+        <text>📥 导入历史记录</text>
+        <text class="toggle-icon">{{showImport ? '▲' : '▼'}}</text>
+      </view>
+
+      <view class="import-content" wx:if="{{showImport}}">
+        <view class="form-group" wx:if="{{profileStartWeightDate}}">
+          <text class="form-label">减肥开始日期</text>
+          <view class="picker-value">{{profileStartWeightDate}}</view>
+        </view>
+        <view class="form-group" wx:if="{{!profileStartWeightDate}}">
+          <text class="form-label">减肥开始日期</text>
+          <picker mode="date" value="{{importStartDate}}" bindchange="onImportStartDateChange">
+            <view class="picker-value">{{importStartDate || '请选择'}}</view>
+          </picker>
+        </view>
+        <view class="form-group">
+          <text class="form-label">初始体重</text>
+          <input class="form-input" type="digit" value="{{importStartWeight}}" bindinput="onImportStartWeightInput" placeholder="如: 70" />
+        </view>
+        <view class="form-group">
+          <text class="form-label">目标体重</text>
+          <input class="form-input" type="digit" value="{{importTargetWeight}}" bindinput="onImportTargetWeightInput" placeholder="如: 60" />
+        </view>
+        <button class="generate-btn" bindtap="generateImportDates">生成日期</button>
+
+        <view class="import-list" wx:if="{{importRows.length > 0}}">
+          <view class="import-header">
+            <text class="col-date">日期</text>
+            <text class="col-weight">体重</text>
+            <text class="col-jin">斤</text>
+          </view>
+          <view wx:for="{{importRows}}" wx:key="index" class="import-item">
+            <text class="col-date">{{item.recordDate}}</text>
+            <input class="import-input" type="digit" value="{{item.weight}}" data-index="{{index}}" bindinput="onImportRowWeightChange" placeholder="kg/斤" />
+            <text class="col-jin">{{item.jin}}斤</text>
+          </view>
+        </view>
+        <text class="import-hint" wx:if="{{importRows.length === 0 && hasGenerated}}">请填写上方信息并点击生成日期</text>
+      </view>
+
+      <!-- 历史记录 -->
+      <view class="section-title" style="margin-top: 30rpx;">📜 历史记录</view>
+      <scroll-view scroll-y class="history-scroll" bindscrolltolower="loadMoreWeightHistory">
+        <view wx:for="{{weightHistory}}" wx:key="id" class="history-item">
+          <view class="history-info">
+            <text class="history-date">{{item.recordDate}}</text>
+            <text class="history-value">{{item.weight}}kg</text>
+            <text class="history-sleep" wx:if="{{item.sleepStart}}">{{item.sleepStart}}-{{item.sleepEnd}}</text>
+          </view>
+          <view class="history-actions">
+            <text class="action-btn" data-item="{{item}}" bindtap="editWeightRecord">✏️</text>
+            <text class="action-btn delete" data-id="{{item.id}}" bindtap="deleteWeightRecord">🗑️</text>
+          </view>
+        </view>
+        <view wx:if="{{weightHistory.length === 0}}" class="empty-hint">暂无记录</view>
+        <view wx:if="{{weightHasMore}}" class="load-more">加载更多...</view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- ============ 维度弹窗 ============ -->
+  <view class="modal {{showMeasurementModal ? 'active' : ''}}" bindtap="hideMeasurementModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">📏 身体维度记录</text>
+        <text class="modal-close" bindtap="hideMeasurementModal">×</text>
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">日期</text>
+        <picker mode="date" value="{{measurementDate}}" bindchange="onMeasurementDateChange">
+          <view class="picker-value">{{measurementDate}}</view>
+        </picker>
+      </view>
+      <view class="form-group">
+        <text class="form-label">胸围 (cm)</text>
+        <input class="form-input" type="digit" value="{{measurementBust}}" bindinput="onMeasurementBustInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">腰围 (cm)</text>
+        <input class="form-input" type="digit" value="{{measurementWaist}}" bindinput="onMeasurementWaistInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">臀围 (cm)</text>
+        <input class="form-input" type="digit" value="{{measurementHip}}" bindinput="onMeasurementHipInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">上臂围 (cm)</text>
+        <input class="form-input" type="digit" value="{{measurementArm}}" bindinput="onMeasurementArmInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">大腿围 (cm)</text>
+        <input class="form-input" type="digit" value="{{measurementThigh}}" bindinput="onMeasurementThighInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">大臂围 (cm)</text>
+        <input class="form-input" type="digit" value="{{measurementUpperArm}}" bindinput="onMeasurementUpperArmInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">小臂围 (cm)</text>
+        <input class="form-input" type="digit" value="{{measurementForearm}}" bindinput="onMeasurementForearmInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">小腿围 (cm)</text>
+        <input class="form-input" type="digit" value="{{measurementCalf}}" bindinput="onMeasurementCalfInput" placeholder="请输入" />
+      </view>
+      <button class="save-btn" bindtap="saveMeasurement">{{editingMeasurementId ? '更新记录' : '记录维度'}}</button>
+
+      <view class="section-title" style="margin-top: 30rpx;">📜 历史记录</view>
+      <scroll-view scroll-y class="history-scroll" bindscrolltolower="loadMoreMeasurementHistory">
+        <view wx:for="{{measurementRecords}}" wx:key="id" class="history-item-compact">
+          <view class="history-left">
+            <text class="history-date">{{item.recordDate}}</text>
+            <text class="history-summary">{{item.waist ? '腰'+item.waist : ''}}{{item.hip ? ' 臀'+item.hip : ''}}{{item.bust ? ' 胸'+item.bust : ''}}{{item.upperArm ? ' 大臂'+item.upperArm : ''}}{{item.forearm ? ' 小臂'+item.forearm : ''}}{{item.thigh ? ' 大腿'+item.thigh : ''}}{{item.calf ? ' 小腿'+item.calf : ''}}</text>
+          </view>
+          <view class="history-actions">
+            <text class="action-btn" data-item="{{item}}" bindtap="editMeasurementRecord">✏️</text>
+            <text class="action-btn delete" data-id="{{item.id}}" bindtap="deleteMeasurementRecord">🗑️</text>
+          </view>
+        </view>
+        <view wx:if="{{measurementRecords.length === 0}}" class="empty-hint">暂无记录</view>
+        <view wx:if="{{measurementHasMore}}" class="load-more">加载更多...</view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- ============ 经期弹窗 ============ -->
+  <view class="modal {{showMenstrualModal ? 'active' : ''}}" bindtap="hideMenstrualModal">
+    <view class="modal-content menstrual-modal" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">🩸 经期记录</text>
+        <text class="modal-close" bindtap="hideMenstrualModal">×</text>
+      </view>
+
+      <!-- 顶部状态卡片 -->
+      <view class="menstrual-status-card">
+        <view class="status-main">
+          <view class="status-phase">{{menstrualCurrentPhase || '未记录'}}</view>
+          <view class="status-days" wx:if="{{menstrualCycleDay}}">第{{menstrualCycleDay}}天</view>
+        </view>
+        <view class="status-prediction" wx:if="{{menstrualNextPeriod}}">
+          <text>下次经期：{{menstrualNextPeriod}}</text>
+        </view>
+        <view class="status-tip" wx:if="{{menstrualTip}}">{{menstrualTip}}</view>
+      </view>
+
+      <!-- 快捷操作区 -->
+      <view class="menstrual-quick-actions">
+        <view class="quick-btn {{menstrualIsInPeriod ? 'active' : ''}}" bindtap="togglePeriodStart">
+          <text class="quick-icon">🩸</text>
+          <text class="quick-text">{{menstrualIsInPeriod ? '经期中' : '记录开始'}}</text>
+        </view>
+        <view class="quick-btn {{menstrualIsInPeriod && menstrualEndDate ? 'active' : ''}}" bindtap="togglePeriodEnd" wx:if="{{menstrualIsInPeriod}}">
+          <text class="quick-icon">✓</text>
+          <text class="quick-text">{{menstrualEndDate ? '已结束' : '结束经期'}}</text>
+        </view>
+        <view class="quick-btn" bindtap="showMenstrualSymptoms">
+          <text class="quick-icon">📝</text>
+          <text class="quick-text">症状记录</text>
+        </view>
+      </view>
+
+      <!-- 日历选择 -->
+      <view class="calendar-nav">
+        <text class="nav-btn" bindtap="changeCalendarMonth" data-dir="-1">◀</text>
+        <picker mode="date" fields="month" value="{{calendarPickerDate}}" bindchange="onCalendarPickerChange">
+          <text class="calendar-title">{{calendarYear}}年{{calendarMonth + 1}}月</text>
+        </picker>
+        <text class="nav-btn" bindtap="changeCalendarMonth" data-dir="1">▶</text>
+      </view>
+
+      <view class="calendar">
+        <view class="calendar-weekday" wx:for="{{weekdays}}" wx:key="index">{{item}}</view>
+        <view wx:for="{{calendarDays}}" wx:key="index" class="calendar-day {{item.class}}" data-date="{{item.dateStr}}" data-day="{{item.day}}" data-recordid="{{item.recordId}}" bindtap="onCalendarDayTap" bindlongpress="onCalendarDayLongPress">
+          <view class="day-dot" wx:if="{{item.isOvulation}}"></view>
+          <text>{{item.day}}</text>
+        </view>
+      </view>
+
+      <!-- 图例 -->
+      <view class="calendar-legend">
+        <view class="legend-item"><view class="legend-dot period"></view><text>经期</text></view>
+        <view class="legend-item"><view class="legend-dot ovulation"></view><text>排卵日</text></view>
+        <view class="legend-item"><view class="legend-dot safe"></view><text>安全期</text></view>
+        <view class="legend-item"><view class="legend-dot fertility"></view><text>易孕期</text></view>
+      </view>
+
+      <!-- 选中日期显示 -->
+      <view class="selected-dates" wx:if="{{periodStartDate || periodEndDate}}">
+        <view class="selected-item" wx:if="{{periodStartDate}}">
+          <text class="selected-label">开始</text>
+          <text class="selected-date">{{periodStartDate}}</text>
+          <text class="delete-btn" bindtap="clearPeriodStart">清除</text>
+        </view>
+        <view class="selected-item" wx:if="{{periodEndDate}}">
+          <text class="selected-label">结束</text>
+          <text class="selected-date">{{periodEndDate}}</text>
+          <text class="delete-btn" bindtap="clearPeriodEnd">清除</text>
+        </view>
+        <view class="period-days-info" wx:if="{{periodStartDate && periodEndDate}}">
+          <text>共 {{periodDays}} 天</text>
+        </view>
+      </view>
+
+      <!-- 经期信息表单 -->
+      <view class="form-section" wx:if="{{periodStartDate}}">
+        <view class="form-row">
+          <view class="form-group" style="flex:1">
+            <text class="form-label">经期天数</text>
+            <view class="picker-value">{{periodEndDate ? periodDays + ' 天' : '进行中...'}}</view>
+          </view>
+          <view class="form-group" style="flex:1" wx:if="{{periodEndDate}}">
+            <text class="form-label">经量</text>
+            <picker bindchange="onFlowLevelChange" value="{{flowLevelIndex}}" range="{{flowLevelOptions}}">
+              <view class="picker-value">{{flowLevelOptions[flowLevelIndex] || '请选择'}}</view>
+            </picker>
+          </view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">疼痛程度</text>
+          <view class="pain-level">
+            <view class="pain-option {{painLevel === 0 ? 'active' : ''}}" data-level="0" bindtap="onPainLevelChange">无痛</view>
+            <view class="pain-option {{painLevel === 1 ? 'active' : ''}}" data-level="1" bindtap="onPainLevelChange">轻微</view>
+            <view class="pain-option {{painLevel === 2 ? 'active' : ''}}" data-level="2" bindtap="onPainLevelChange">中度</view>
+            <view class="pain-option {{painLevel === 3 ? 'active' : ''}}" data-level="3" bindtap="onPainLevelChange">重度</view>
+          </view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">身体症状（多选）</text>
+          <scroll-view scroll-x class="symptom-scroll">
+            <view class="symptom-tags">
+              <view class="symptom-tag {{symptomSelected('cramp') ? 'active' : ''}}" data-symptom="cramp" bindtap="toggleSymptom">腹痛</view>
+              <view class="symptom-tag {{symptomSelected('waistPain') ? 'active' : ''}}" data-symptom="waistPain" bindtap="toggleSymptom">腰酸</view>
+              <view class="symptom-tag {{symptomSelected('fatigue') ? 'active' : ''}}" data-symptom="fatigue" bindtap="toggleSymptom">乏力</view>
+              <view class="symptom-tag {{symptomSelected('acne') ? 'active' : ''}}" data-symptom="acne" bindtap="toggleSymptom">长痘</view>
+              <view class="symptom-tag {{symptomSelected('bloating') ? 'active' : ''}}" data-symptom="bloating" bindtap="toggleSymptom">水肿</view>
+              <view class="symptom-tag {{symptomSelected('headache') ? 'active' : ''}}" data-symptom="headache" bindtap="toggleSymptom">头痛</view>
+              <view class="symptom-tag {{symptomSelected('nausea') ? 'active' : ''}}" data-symptom="nausea" bindtap="toggleSymptom">恶心</view>
+              <view class="symptom-tag {{symptomSelected('dizziness') ? 'active' : ''}}" data-symptom="dizziness" bindtap="toggleSymptom">头晕</view>
+              <view class="symptom-tag {{symptomSelected('breastPain') ? 'active' : ''}}" data-symptom="breastPain" bindtap="toggleSymptom">乳房胀痛</view>
+              <view class="symptom-tag {{symptomSelected('appetiteChange') ? 'active' : ''}}" data-symptom="appetiteChange" bindtap="toggleSymptom">食欲变化</view>
+              <view class="symptom-tag {{symptomSelected('sleepChange') ? 'active' : ''}}" data-symptom="sleepChange" bindtap="toggleSymptom">睡眠变化</view>
+              <view class="symptom-tag {{symptomSelected('moodSwing') ? 'active' : ''}}" data-symptom="moodSwing" bindtap="toggleSymptom">情绪波动</view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">备注</text>
+          <input class="form-input" value="{{menstrualOtherInfo}}" bindinput="onMenstrualOtherInfoInput" placeholder="其他情况..." />
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">心情</text>
+          <scroll-view scroll-x class="mood-scroll">
+            <view class="mood-tags">
+              <view class="mood-tag {{menstrualMood === 'calm' ? 'active' : ''}}" data-mood="calm" bindtap="onMoodChange">😊 平静</view>
+              <view class="mood-tag {{menstrualMood === 'irritable' ? 'active' : ''}}" data-mood="irritable" bindtap="onMoodChange">😤 烦躁</view>
+              <view class="mood-tag {{menstrualMood === 'sad' ? 'active' : ''}}" data-mood="sad" bindtap="onMoodChange">😢 抑郁</view>
+              <view class="mood-tag {{menstrualMood === 'anxious' ? 'active' : ''}}" data-mood="anxious" bindtap="onMoodChange">😰 焦虑</view>
+              <view class="mood-tag {{menstrualMood === 'happy' ? 'active' : ''}}" data-mood="happy" bindtap="onMoodChange">😄 愉快</view>
+              <view class="mood-tag {{menstrualMood === 'lonely' ? 'active' : ''}}" data-mood="lonely" bindtap="onMoodChange">😔 孤独</view>
+              <view class="mood-tag {{menstrualMood === 'energetic' ? 'active' : ''}}" data-mood="energetic" bindtap="onMoodChange">💪 精力充沛</view>
+              <view class="mood-tag {{menstrualMood === 'tired' ? 'active' : ''}}" data-mood="tired" bindtap="onMoodChange">😴 疲惫</view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <button class="save-btn" wx:if="{{periodEndDate}}" bindtap="saveMenstrualRecord">保存记录</button>
+        <button class="save-btn period-end-btn" wx:if="{{!periodEndDate}}" bindtap="endCurrentPeriod">结束经期</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- ============ 档案弹窗 ============ -->
+  <view class="modal {{showProfileModal ? 'active' : ''}}" bindtap="hideProfileModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">👤 个人档案</text>
+        <text class="modal-close" bindtap="hideProfileModal">×</text>
+      </view>
+
+      <scroll-view scroll-y class="profile-scroll">
+      <view class="section-title">📋 基本信息</view>
+      <view class="form-group">
+        <text class="form-label">昵称</text>
+        <input class="form-input" value="{{profileNickname}}" bindinput="onProfileNicknameInput" placeholder="请输入" />
+      </view>
+      <view class="form-row">
+        <view class="form-group" style="flex:1">
+          <text class="form-label">年龄（岁）</text>
+          <input class="form-input" type="number" value="{{profileAge}}" bindinput="onProfileAgeInput" placeholder="请输入" />
+        </view>
+        <view class="form-group" style="flex:1">
+          <text class="form-label">性别</text>
+          <picker bindchange="onGenderChange" value="{{profileGenderIndex}}" range="{{genderOptions}}">
+            <view class="picker-value">{{genderOptions[profileGenderIndex] || '请选择'}}</view>
+          </picker>
+        </view>
+      </view>
+      <view class="form-group">
+        <text class="form-label">身高（cm）</text>
+        <input class="form-input" type="digit" value="{{profileHeight}}" bindinput="onProfileHeightInput" placeholder="请输入" />
+      </view>
+
+      <view class="section-title" style="margin-top: 20rpx;">🎯 用户类型</view>
+      <view class="form-group">
+        <text class="form-label">选择您的目标类型</text>
+        <picker bindchange="onUserTypeChange" value="{{profileUserTypeIndex}}" range="{{userTypeOptions}}">
+          <view class="picker-value">{{userTypeOptions[profileUserTypeIndex] || '请选择'}}</view>
+        </picker>
+      </view>
+
+      <view class="section-title" style="margin-top: 20rpx;">⚖️ 体重目标</view>
+      <view class="form-group">
+        <text class="form-label">初始体重（kg）</text>
+        <input class="form-input" type="digit" value="{{profileInitialWeight}}" bindinput="onProfileInitialWeightInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">目标体重（kg）</text>
+        <input class="form-input" type="digit" value="{{profileTargetWeight}}" bindinput="onProfileTargetWeightInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">计划减重周期（天）</text>
+        <input class="form-input" type="number" value="{{profileWeightLossPeriod}}" bindinput="onProfileWeightLossPeriodInput" placeholder="请输入" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">开始减重日期</text>
+        <picker mode="date" value="{{profileStartWeightDate}}" bindchange="onProfileStartWeightDateChange">
+          <view class="picker-value">{{profileStartWeightDate || '请选择'}}</view>
+        </picker>
+      </view>
+
+      <view class="section-title" style="margin-top: 20rpx;">🏃 运动习惯</view>
+      <view class="form-group">
+        <text class="form-label">每周运动次数</text>
+        <input class="form-input" type="number" value="{{profileExerciseFrequency}}" bindinput="onProfileExerciseFrequencyInput" placeholder="如：3" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">运动偏好</text>
+        <picker bindchange="onExercisePreferenceChange" value="{{profileExercisePreferenceIndex}}" range="{{exercisePreferenceOptions}}">
+          <view class="picker-value">{{exercisePreferenceOptions[profileExercisePreferenceIndex] || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="form-group">
+        <text class="form-label">健身水平</text>
+        <picker bindchange="onFitnessLevelChange" value="{{profileFitnessLevelIndex}}" range="{{fitnessLevelOptions}}">
+          <view class="picker-value">{{fitnessLevelOptions[profileFitnessLevelIndex] || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="form-group">
+        <text class="form-label">是否有膝盖问题</text>
+        <view class="radio-group">
+          <radio-group bindchange="onHasKneeIssueChange">
+            <label class="radio-label"><radio value="true" checked="{{profileHasKneeIssue === true}}" color="#FF6B6B"/> 是</label>
+            <label class="radio-label"><radio value="false" checked="{{profileHasKneeIssue === false}}" color="#FF6B6B"/> 否</label>
+          </radio-group>
+        </view>
+      </view>
+
+      <view class="section-title" style="margin-top: 20rpx;">🍽️ 饮食习惯</view>
+      <view class="form-group">
+        <text class="form-label">饮食偏好</text>
+        <picker bindchange="onDietPreferenceChange" value="{{profileDietPreferenceIndex}}" range="{{dietPreferenceOptions}}">
+          <view class="picker-value">{{dietPreferenceOptions[profileDietPreferenceIndex] || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="form-group">
+        <text class="form-label">是否吃早餐</text>
+        <view class="radio-group">
+          <radio-group bindchange="onBreakfastHabitChange">
+            <label class="radio-label"><radio value="true" checked="{{profileBreakfastHabit === true}}" color="#FF6B6B"/> 是</label>
+            <label class="radio-label"><radio value="false" checked="{{profileBreakfastHabit === false}}" color="#FF6B6B"/> 否</label>
+          </radio-group>
+        </view>
+      </view>
+      <view class="form-group">
+        <text class="form-label">饮食忌口</text>
+        <input class="form-input" value="{{profileDietaryTaboo}}" bindinput="onProfileDietaryTabooInput" placeholder="如：海鲜、辛辣、酒精" />
+      </view>
+
+      <view class="section-title" style="margin-top: 20rpx;">📌 体质标签（可多选）</view>
+      <view class="tag-list">
+        <view class="tag-item {{profileConstitutionTags.indexOf('易水肿') !== -1 ? 'active' : ''}}" data-tag="易水肿" bindtap="toggleConstitutionTag">易水肿</view>
+        <view class="tag-item {{profileConstitutionTags.indexOf('代谢低') !== -1 ? 'active' : ''}}" data-tag="代谢低" bindtap="toggleConstitutionTag">代谢低</view>
+        <view class="tag-item {{profileConstitutionTags.indexOf('碳水敏感') !== -1 ? 'active' : ''}}" data-tag="碳水敏感" bindtap="toggleConstitutionTag">碳水敏感</view>
+        <view class="tag-item {{profileConstitutionTags.indexOf('压力胖') !== -1 ? 'active' : ''}}" data-tag="压力胖" bindtap="toggleConstitutionTag">压力胖</view>
+        <view class="tag-item {{profileConstitutionTags.indexOf('熬夜体质') !== -1 ? 'active' : ''}}" data-tag="熬夜体质" bindtap="toggleConstitutionTag">熬夜体质</view>
+        <view class="tag-item {{profileConstitutionTags.indexOf('宫寒') !== -1 ? 'active' : ''}}" data-tag="宫寒" bindtap="toggleConstitutionTag">宫寒</view>
+        <view class="tag-item {{profileConstitutionTags.indexOf('易胖体质') !== -1 ? 'active' : ''}}" data-tag="易胖体质" bindtap="toggleConstitutionTag">易胖体质</view>
+        <view class="tag-item {{profileConstitutionTags.indexOf('肌肉量低') !== -1 ? 'active' : ''}}" data-tag="肌肉量低" bindtap="toggleConstitutionTag">肌肉量低</view>
+        <view class="tag-item {{profileConstitutionTags.indexOf('膝盖不好') !== -1 ? 'active' : ''}}" data-tag="膝盖不好" bindtap="toggleConstitutionTag">膝盖不好</view>
+      </view>
+
+      <view class="section-title" style="margin-top: 20rpx;">💼 生活状态</view>
+      <view class="form-group">
+        <text class="form-label">工作压力（1-5）</text>
+        <input class="form-input" type="number" value="{{profileWorkPressure}}" bindinput="onProfileWorkPressureInput" placeholder="1=轻松，5=压力大" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">每日饮水量目标（ml）</text>
+        <input class="form-input" type="number" value="{{profileWaterIntake}}" bindinput="onProfileWaterIntakeInput" placeholder="如：2000" />
+      </view>
+
+      <view class="section-title" style="margin-top: 20rpx;">😴 睡眠时间</view>
+      <view class="form-row">
+        <view class="form-group" style="flex:1">
+          <text class="form-label">睡眠时间</text>
+          <picker mode="time" value="{{profileSleepStart}}" bindchange="onProfileSleepStartChange">
+            <view class="picker-value">{{profileSleepStart || '请选择'}}</view>
+          </picker>
+        </view>
+        <view class="form-group" style="flex:1">
+          <text class="form-label">起床时间</text>
+          <picker mode="time" value="{{profileSleepEnd}}" bindchange="onProfileSleepEndChange">
+            <view class="picker-value">{{profileSleepEnd || '请选择'}}</view>
+          </picker>
+        </view>
+      </view>
+
+      <button class="save-btn" bindtap="saveProfile">保存修改</button>
+      </scroll-view>
+    </view>
+  </view>
+</view>
