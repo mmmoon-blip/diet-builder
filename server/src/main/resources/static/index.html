@@ -1,0 +1,3188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>减减 - 减肥管家（Web测试版）</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* 登录区域 */
+    .login-section {
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      padding: 60px 24px;
+      text-align: center;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-logo {
+      font-size: 80px;
+      margin-bottom: 16px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 40px;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .login-card-title {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .main-content {
+      display: none;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+    .login-title { font-size: 32px; font-weight: bold; margin-bottom: 8px; }
+    .login-input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 16px;
+      text-align: center;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: #FF6B6B;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .login-btn-wechat {
+      width: 100%;
+      padding: 14px;
+      background: #07C160;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .login-divider {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e0e0e0;
+    }
+
+    .login-divider span {
+      padding: 0 12px;
+    }
+
+    .login-id-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .login-tip {
+      font-size: 12px;
+      color: #999;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    /* 主内容 */
+    .header {
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      color: white;
+      padding: 24px;
+    }
+    .header-top { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .title { font-size: 28px; font-weight: bold; display: block; }
+    .subtitle { font-size: 14px; opacity: 0.9; display: block; margin-top: 4px; }
+    .logout-btn { font-size: 12px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; border-radius: 16px; cursor: pointer; }
+
+    .header-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .header-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .user-info {
+      background: white;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #666;
+      border-bottom: 1px solid #eee;
+    }
+
+    .welcome-section {
+      background: white;
+      margin: 16px;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .welcome-icon { font-size: 48px; margin-bottom: 12px; }
+    .welcome-text {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.8;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+
+    .quick-tips {
+      margin: 0 16px;
+      padding: 16px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .tips-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+    .tips-list { display: flex; justify-content: space-between; }
+    .tip-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      cursor: pointer;
+    }
+    .tip-icon { font-size: 28px; }
+    .tip-label { font-size: 12px; color: #999; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 40px; color: #999; }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: white;
+      width: 100%;
+      max-width: 480px;
+      max-height: 85vh;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-title { font-size: 18px; font-weight: bold; }
+    .modal-close {
+      font-size: 28px;
+      color: #999;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .form-section {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .form-section:last-of-type { border-bottom: none; }
+    .form-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #FF6B6B;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .form-group { margin-bottom: 12px; }
+    .form-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .form-input {
+      width: 100%;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      box-sizing: border-box;
+      background: #fafafa;
+    }
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+
+    .save-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    .cancel-btn {
+      width: 100%;
+      padding: 14px;
+      background: #999;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    .history-section {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+    }
+
+    /* 经期相关样式 */
+    .menstrual-current-section {
+      background: #fff5f5;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .menstrual-month-picker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .menstrual-month-picker select {
+      padding: 4px 8px;
+      border: 1px solid #FF6B6B;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 14px;
+      color: #333;
+    }
+    .menstrual-month-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #FF6B6B;
+    }
+    .menstrual-toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+    .menstrual-toggle-label {
+      font-size: 14px;
+      color: #333;
+    }
+    .switch {
+      position: relative;
+      width: 50px;
+      height: 28px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 28px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #FF6B6B;
+    }
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+    .menstrual-calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .menstrual-calendar-day {
+      padding: 6px 2px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .menstrual-calendar-day.header {
+      font-weight: 600;
+      color: #999;
+      cursor: default;
+    }
+    .menstrual-calendar-day.predicted-period {
+      background: #ffcccc;
+      color: #FF6B6B;
+    }
+    .menstrual-calendar-day.selected-period {
+      background: #FF6B6B;
+      color: white;
+    }
+    .menstrual-calendar-day.today {
+      border: 2px solid #FF8E53;
+    }
+    .menstrual-calendar-day.empty {
+      cursor: default;
+    }
+    .menstrual-prediction {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .menstrual-prediction-phase {
+      font-size: 16px;
+      font-weight: 600;
+      color: #FF6B6B;
+    }
+    .menstrual-prediction-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .menstrual-prediction-detail {
+      font-size: 12px;
+      color: #999;
+      margin-top: 8px;
+      text-align: left;
+    }
+    .menstrual-period-hint {
+      background: #fff0f0;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #FF6B6B;
+      margin: 8px 0;
+    }
+    .menstrual-mode-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #FF6B6B;
+    }
+    .mode-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      cursor: pointer;
+      background: #fff;
+      color: #FF6B6B;
+      transition: all 0.2s;
+    }
+    .mode-tab.active {
+      background: #FF6B6B;
+      color: white;
+    }
+    .menstrual-calendar-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .menstrual-calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      text-align: center;
+      margin: 8px 0;
+      padding: 8px;
+      background: #fff;
+      border-radius: 8px;
+    }
+    .menstrual-calendar-day {
+      padding: 8px 2px;
+      font-size: 13px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .menstrual-calendar-day.header {
+      font-weight: 600;
+      color: #999;
+      cursor: default;
+      font-size: 11px;
+    }
+    .menstrual-calendar-day.period {
+      background: #ffcccc;
+      color: #FF6B6B;
+      font-weight: 500;
+    }
+    .menstrual-calendar-day.period.active {
+      background: #FF6B6B;
+      color: white;
+    }
+    .menstrual-calendar-day.period.recorded {
+      background: #ffe0e0;
+      color: #FF6B6B;
+    }
+    .menstrual-calendar-day.today {
+      border: 2px solid #FF8E53;
+    }
+    .menstrual-calendar-day.empty {
+      cursor: default;
+    }
+    .menstrual-calendar-day.clickable:hover {
+      background: #ffe0e0;
+    }
+    .menstrual-import-month-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .import-month-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    .nav-btn {
+      cursor: pointer;
+      padding: 4px 8px;
+      color: #FF6B6B;
+      font-size: 12px;
+    }
+    .menstrual-import-selected {
+      text-align: center;
+      padding: 8px;
+      background: #fff5f5;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .selected-label {
+      font-size: 13px;
+      color: #999;
+    }
+    .selected-dates {
+      font-size: 14px;
+      color: #FF6B6B;
+      font-weight: 500;
+    }
+    .history-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #FF6B6B;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .history-date { font-size: 12px; color: #999; }
+    .history-value { font-size: 14px; color: #333; }
+    .history-actions { display: flex; gap: 4px; }
+    .action-btn { cursor: pointer; font-size: 16px; }
+    .empty-history {
+      text-align: center;
+      padding: 20px 0;
+      color: #999;
+      font-size: 13px;
+    }
+    .exercise-summary, .diet-summary {
+      display: flex;
+      gap: 20px;
+      padding: 10px 0;
+    }
+    .summary-item {
+      font-size: 14px;
+      color: #666;
+    }
+    .summary-item span {
+      color: #FF6B6B;
+      font-weight: 600;
+    }
+    .link-btn {
+      color: #FF6B6B;
+      cursor: pointer;
+      margin: 0 4px;
+    }
+    .link-btn:hover {
+      text-decoration: underline;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 0;
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+    .pagination button {
+      padding: 6px 12px;
+      border: 1px solid #e0e0e0;
+      background: white;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .pagination button:disabled {
+      color: #ccc;
+    }
+    .pagination input[type="number"] {
+      width: 50px;
+      padding: 4px 6px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 12px;
+      text-align: center;
+    }
+    .pagination select {
+      padding: 4px 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.75);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 2000;
+      animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Error */
+    .error-msg { color: #f44336; font-size: 13px; margin-top: 8px; text-align: center; }
+
+    /* Import rows */
+    .import-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+    .import-hint {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 12px;
+    }
+    .generate-btn {
+      padding: 6px 12px;
+      background: #FF6B6B;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .import-rows-container {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .import-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .import-row:last-child { border-bottom: none; }
+    .import-row-date {
+      width: 110px;
+      font-size: 13px;
+      color: #666;
+    }
+    .import-row input {
+      flex: 1;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 14px;
+      margin: 0 8px;
+    }
+    .import-row .delete-btn {
+      font-size: 18px;
+      color: #999;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .import-row .delete-btn:hover { color: #f44336; }
+    .import-empty {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-size: 13px;
+    }
+    .import-summary {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 登录区域 -->
+  <div class="login-section" id="loginSection">
+    <div class="login-logo">🤍</div>
+    <div class="login-title">减减</div>
+    <div class="login-subtitle">您的减肥小管家</div>
+
+    <div class="login-card">
+      <div class="login-card-title">Web端仅支持游客体验</div>
+
+      <button class="login-btn-wechat" onclick="loginAsGuest()">
+        🚀 开始体验
+      </button>
+
+      <div class="login-tip">登录即表示同意《用户协议》和《隐私政策》</div>
+    </div>
+
+    <div class="login-tip" style="margin-top: 20px; color: rgba(255,255,255,0.6);">
+      完整功能请使用微信小程序
+    </div>
+
+    <div class="error-msg" id="loginError"></div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main-content" id="mainContent">
+    <div class="header">
+      <div class="header-top">
+        <div>
+          <span class="title" id="headerNickname">减减 🤍</span>
+          <span class="subtitle">您的减肥小管家</span>
+        </div>
+        <button class="logout-btn" onclick="logout()">切换用户</button>
+      </div>
+      <div class="header-right">
+        <button class="header-btn" onclick="showWeightModal()">⚖️ 体重</button>
+        <button class="header-btn" onclick="showMeasurementModal()">📏 维度</button>
+        <button class="header-btn" onclick="showMenstrualModal()">🩸 经期</button>
+        <button class="header-btn" onclick="showExerciseModal()">🏃 运动</button>
+        <button class="header-btn" onclick="showDietModal()">🍽️ 饮食</button>
+        <button class="header-btn" onclick="showProfileModal()">👤 档案</button>
+      </div>
+    </div>
+
+    <div class="user-info" id="userInfo">加载中...</div>
+
+    <!-- 体重弹窗 -->
+    <div class="modal" id="weightModal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span class="modal-title" id="weightModalTitle">体重记录</span>
+          <span class="modal-close" onclick="hideWeightModal()">×</span>
+        </div>
+
+        <!-- 快速记录 -->
+        <div class="form-section" id="quickRecordSection">
+          <span class="form-section-title">快速记录</span>
+          <input type="hidden" id="editingWeightId" value="">
+
+          <div class="form-group">
+            <label class="form-label">日期</label>
+            <input class="form-input" type="date" id="weightDate">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">体重 (kg)</label>
+            <input class="form-input" type="number" id="weightValue" step="0.1" placeholder="如: 65.5">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">睡眠开始</label>
+              <input class="form-input" type="time" id="weightSleepStart">
+            </div>
+            <div class="form-group">
+              <label class="form-label">睡眠结束</label>
+              <input class="form-input" type="time" id="weightSleepEnd">
+            </div>
+          </div>
+
+          <button class="save-btn" onclick="saveWeight()">保存记录</button>
+        </div>
+
+        <!-- 批量导入 -->
+        <div class="form-section">
+          <div class="import-toggle" onclick="toggleImportSection()">
+            <span class="form-section-title" style="margin-bottom:0">📥 导入历史记录</span>
+            <span id="importToggleIcon">▼</span>
+          </div>
+          <div class="import-content" id="importContent" style="display:none;">
+            <div class="import-hint">点击「生成日期」从开始减肥日起每天生成一行</div>
+            <div class="import-rows-container" id="importRowsContainer">
+              <div class="import-empty">点击上方「生成日期」按钮</div>
+            </div>
+            <div class="import-summary" id="importSummary"></div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <button class="generate-btn" style="flex:1;padding:10px;" onclick="generateImportDates()">📅 生成日期</button>
+              <button class="save-btn" style="flex:1;margin-top:0;background:#4CAF50;" onclick="submitImportRecords()">导入已填写</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#666;">
+              <span>单位：</span>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+                <input type="radio" name="batchUnit" value="kg" checked onchange="setBatchUnit('kg')"> kg
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+                <input type="radio" name="batchUnit" value="jin" onchange="setBatchUnit('jin')"> 斤
+              </label>
+              <span style="margin-left:auto;font-size:11px;color:#999;">（批量设置）</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="history-section">
+          <span class="history-title">历史记录</span>
+          <div id="weightHistoryList"><div class="loading">加载中...</div></div>
+          <div id="weightPagination" class="pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 维度弹窗 -->
+    <div class="modal" id="measurementModal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span class="modal-title">身体维度记录</span>
+          <span class="modal-close" onclick="hideMeasurementModal()">×</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">日期</label>
+          <input class="form-input" type="date" id="measurementDate">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">胸围 (cm)</label>
+            <input class="form-input" type="number" id="measurementBust" placeholder="如: 85">
+          </div>
+          <div class="form-group">
+            <label class="form-label">腰围 (cm)</label>
+            <input class="form-input" type="number" id="measurementWaist" placeholder="如: 70">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">臀围 (cm)</label>
+            <input class="form-input" type="number" id="measurementHip" placeholder="如: 90">
+          </div>
+          <div class="form-group">
+            <label class="form-label">大腿围 (cm)</label>
+            <input class="form-input" type="number" id="measurementThigh" placeholder="如: 55">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">大臂围 (cm)</label>
+            <input class="form-input" type="number" id="measurementUpperArm" placeholder="如: 28">
+          </div>
+          <div class="form-group">
+            <label class="form-label">小臂围 (cm)</label>
+            <input class="form-input" type="number" id="measurementForearm" placeholder="如: 25">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">小腿围 (cm)</label>
+            <input class="form-input" type="number" id="measurementCalf" placeholder="如: 38">
+          </div>
+        </div>
+
+        <button class="save-btn" onclick="saveMeasurement()">保存记录</button>
+        <button class="cancel-btn" id="measurementCancelBtn" style="display:none" onclick="cancelMeasurementEdit()">取消编辑</button>
+
+        <div class="history-section">
+          <span class="history-title">历史记录</span>
+          <div id="measurementHistoryList"><div class="loading">加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 经期弹窗 -->
+    <div class="modal" id="menstrualModal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span class="modal-title">经期记录</span>
+          <span class="modal-close" onclick="hideMenstrualModal()">×</span>
+        </div>
+
+        <!-- 经期区域 -->
+        <div class="menstrual-current-section">
+          <div class="menstrual-month-picker">
+            <select id="menstrualYearSelect" onchange="onMenstrualYearChange()"></select>
+            <select id="menstrualMonthSelect" onchange="onMenstrualMonthChange()"></select>
+          </div>
+          <div class="menstrual-calendar-nav">
+            <span class="nav-btn" onclick="changeCalendarMonth(-1)">◀</span>
+            <span class="nav-btn" onclick="changeCalendarMonth(1)">▶</span>
+          </div>
+          <div class="menstrual-calendar" id="menstrualCalendar"></div>
+
+          <!-- 经期开关 -->
+          <div class="menstrual-toggle-row">
+            <span class="menstrual-toggle-label">我正在经期</span>
+            <label class="switch">
+              <input type="checkbox" id="menstrualInPeriodToggle" onchange="onMenstrualToggleChange()">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="menstrualInPeriodInput" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">开始日期</label>
+              <input class="form-input" type="date" id="menstrualStartDate">
+            </div>
+            <div class="menstrual-period-hint" id="menstrualPeriodHint" style="display:none;">
+              经期第 <span id="menstrualCurrentDay">1</span> 天，预计还需 <span id="menstrualDaysLeft">4</span> 天结束
+            </div>
+            <button class="save-btn" onclick="saveMenstrual()">记录经期</button>
+          </div>
+          <div class="menstrual-prediction" id="menstrualPrediction"></div>
+
+          <!-- 选择提示 -->
+          <div class="menstrual-import-selected" id="menstrualImportSelected" style="display:none;">
+            <span class="selected-label">点击日历选择经期时间段</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 运动弹窗 -->
+    <div class="modal" id="exerciseModal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span class="modal-title">运动记录</span>
+          <span class="modal-close" onclick="hideExerciseModal()">×</span>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">添加运动</span>
+          <input type="hidden" id="editingExerciseId" value="">
+
+          <div class="form-group">
+            <label class="form-label">日期</label>
+            <input class="form-input" type="date" id="exerciseDate">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">运动类型</label>
+            <select class="form-input" id="exerciseType">
+              <option value="跑步">跑步</option>
+              <option value="快走">快走</option>
+              <option value="走路">走路</option>
+              <option value="游泳">游泳</option>
+              <option value="骑行">骑行</option>
+              <option value="跳绳">跳绳</option>
+              <option value="健身训练">健身训练</option>
+              <option value="力量训练">力量训练</option>
+              <option value="HIIT">HIIT</option>
+              <option value="瑜伽">瑜伽</option>
+              <option value="普拉提">普拉提</option>
+              <option value="拉伸">拉伸</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">时长(分钟)</label>
+              <input class="form-input" type="number" id="exerciseDuration" placeholder="如: 30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">消耗(kcal)</label>
+              <input class="form-input" type="number" id="exerciseCalories" placeholder="如: 200">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">时段（可选）</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input class="form-input" type="time" id="exerciseStartTime" style="flex:1;">
+              <span>至</span>
+              <input class="form-input" type="time" id="exerciseEndTime" style="flex:1;">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">备注</label>
+            <input class="form-input" id="exerciseNote" placeholder="可选">
+          </div>
+
+          <button class="save-btn" onclick="saveExercise()">保存</button>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">今日汇总</span>
+          <div class="exercise-summary" id="exerciseSummary">
+            <div class="summary-item">总时长: <span id="exerciseTotalDuration">0</span> 分钟</div>
+            <div class="summary-item">总消耗: <span id="exerciseTotalCalories">0</span> kcal</div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">历史记录</span>
+          <div class="history-list" id="exerciseHistoryList"></div>
+          <div class="pagination" id="exercisePagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 饮食弹窗 -->
+    <div class="modal" id="dietModal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span class="modal-title">饮食记录</span>
+          <span class="modal-close" onclick="hideDietModal()">×</span>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">添加记录</span>
+          <input type="hidden" id="editingDietId" value="">
+
+          <div class="form-group">
+            <label class="form-label">日期</label>
+            <input class="form-input" type="date" id="dietDate">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">餐次</label>
+            <select class="form-input" id="dietMealType">
+              <option value="早餐">早餐</option>
+              <option value="午餐">午餐</option>
+              <option value="晚餐">晚餐</option>
+              <option value="加餐">加餐</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">食物描述</label>
+            <input class="form-input" id="dietFoods" placeholder="如: 米饭、牛肉、蔬菜">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">卡路里(kcal)</label>
+            <input class="form-input" type="number" id="dietCalories" placeholder="可选">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">上传图片</label>
+            <input class="form-input" type="file" id="dietImage" accept="image/*" onchange="handleDietImageUpload(event)">
+            <div id="dietImagePreview" style="display:none;margin-top:8px;">
+              <img id="dietImagePreviewImg" style="max-width:200px;max-height:200px;border-radius:8px;">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">备注</label>
+            <input class="form-input" id="dietNote" placeholder="可选">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+            <label class="form-label">时段（可选）</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input class="form-input" type="time" id="dietStartTime" style="flex:1;">
+              <span>至</span>
+              <input class="form-input" type="time" id="dietEndTime" style="flex:1;">
+            </div>
+          </div>
+
+          <button class="save-btn" onclick="saveDiet()">保存</button>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">今日汇总</span>
+          <div class="diet-summary" id="dietSummary">
+            <div class="summary-item">总摄入: <span id="dietTotalCalories">0</span> kcal</div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">历史记录</span>
+          <div class="history-list" id="dietHistoryList"></div>
+          <div class="pagination" id="dietPagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 档案弹窗 -->
+    <div class="modal" id="profileModal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span class="modal-title">个人档案</span>
+          <span class="modal-close" onclick="hideProfileModal()">×</span>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">基本信息</span>
+
+          <div class="form-group">
+            <label class="form-label">昵称</label>
+            <input class="form-input" id="profileNickname" placeholder="给自己起个名字">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">年龄</label>
+              <input class="form-input" type="number" id="profileAge" placeholder="如: 25">
+            </div>
+            <div class="form-group">
+              <label class="form-label">性别</label>
+              <select class="form-input" id="profileGender">
+                <option value="">请选择</option>
+                <option value="1">男</option>
+                <option value="2">女</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">身高 (cm)</label>
+            <input class="form-input" type="number" id="profileHeight" placeholder="如: 165">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">体重目标</span>
+
+          <div class="form-group">
+            <label class="form-label">开始减重日期</label>
+            <input class="form-input" type="date" id="profileStartWeightDate">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">初始体重 (kg)</label>
+            <input class="form-input" type="number" id="profileInitialWeight" step="0.1" placeholder="如: 70">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">目标体重 (kg)</label>
+            <input class="form-input" type="number" id="profileTargetWeight" step="0.1" placeholder="如: 60">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">减肥周期 (天)</label>
+            <input class="form-input" type="number" id="profileWeightLossPeriod" placeholder="如: 90">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <span class="form-section-title">生活习惯</span>
+
+          <div class="form-group">
+            <label class="form-label">饮食禁忌</label>
+            <input class="form-input" id="profileDietaryTaboo" placeholder="如: 海鲜过敏">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">睡眠开始</label>
+              <input class="form-input" type="time" id="profileSleepStart">
+            </div>
+            <div class="form-group">
+              <label class="form-label">睡眠结束</label>
+              <input class="form-input" type="time" id="profileSleepEnd">
+            </div>
+          </div>
+        </div>
+
+        <button class="save-btn" onclick="saveProfile()">保存档案</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" style="display:none;"></div>
+
+  <script>
+    const API_BASE = 'http://localhost:8080/api';
+    let currentUserId = localStorage.getItem('userId');
+    let currentUser = null;
+    let isGuest = localStorage.getItem('isGuest') === 'true';
+
+    // 分页
+    const PAGE_SIZE = 7;
+    let weightHistoryAll = [];
+    let weightHistoryPage = 1;
+
+    // ============ Toast ============
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    }
+
+    // ============ 登录 ============
+    function login() {
+      const userIdInput = document.getElementById('userIdInput');
+      const userId = userIdInput.value.trim();
+      const errorEl = document.getElementById('loginError');
+
+      if (!userId) {
+        errorEl.textContent = '请输入用户ID';
+        return;
+      }
+
+      // 验证用户ID
+      fetch(`${API_BASE}/user/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            currentUserId = userId;
+            localStorage.setItem('userId', userId);
+            currentUser = data.data;
+            isGuest = false;
+            showMainContent();
+          } else {
+            errorEl.textContent = '用户不存在';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          errorEl.textContent = '连接失败，请检查后端服务';
+        });
+    }
+
+    // 游客模式登录
+    function loginAsGuest() {
+      const errorEl = document.getElementById('loginError');
+      const deviceId = localStorage.getItem('deviceId') || generateDeviceId();
+
+      fetch(`${API_BASE}/auth/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId: deviceId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const token = data.data.token;
+            const user = data.data.user;
+            currentUserId = user.id;
+            localStorage.setItem('userId', user.id);
+            localStorage.setItem('token', token);
+            localStorage.setItem('isGuest', 'true');
+            currentUser = user;
+            isGuest = true;
+            showMainContent();
+          } else {
+            errorEl.textContent = data.message || '登录失败';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          errorEl.textContent = '连接失败，请检查后端服务';
+        });
+    }
+
+    // 生成设备ID
+    function generateDeviceId() {
+      const deviceId = 'web_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('deviceId', deviceId);
+      return deviceId;
+    }
+
+    function logout() {
+      currentUserId = null;
+      currentUser = null;
+      isGuest = false;
+      localStorage.removeItem('userId');
+      localStorage.removeItem('token');
+      localStorage.removeItem('isGuest');
+      document.getElementById('loginSection').style.display = 'flex';
+      document.getElementById('mainContent').style.display = 'none';
+    }
+
+    function showMainContent() {
+      const loginSection = document.getElementById('loginSection');
+      const mainContent = document.getElementById('mainContent');
+
+      loginSection.style.display = 'none';
+      mainContent.style.display = 'block';
+
+      loadUserData();
+    }
+
+    // ============ 加载数据 ============
+    function loadUserData() {
+      if (!currentUserId) return;
+
+      // 加载用户信息
+      fetch(`${API_BASE}/user/${currentUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            currentUser = data.data;
+            updateUserInfo();
+          }
+        })
+        .catch(console.error);
+    }
+
+    function updateUserInfo() {
+      const userInfoEl = document.getElementById('userInfo');
+      const headerNickname = document.getElementById('headerNickname');
+
+      if (currentUser) {
+        headerNickname.textContent = (currentUser.nickname || '减减用户') + ' 🤍';
+
+        let parts = [];
+        if (currentUser.nickname) parts.push(currentUser.nickname);
+        if (currentUser.targetWeight) parts.push('目标: ' + currentUser.targetWeight + 'kg');
+        userInfoEl.textContent = parts.length > 0 ? parts.join(' | ') : '点击设置个人档案';
+      }
+    }
+
+    // ============ Weight Modal ============
+    function getTodayString() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function toggleImportSection() {
+      const content = document.getElementById('importContent');
+      const icon = document.getElementById('importToggleIcon');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '▲';
+      } else {
+        content.style.display = 'none';
+        icon.textContent = '▼';
+      }
+    }
+
+    function showWeightModal() {
+      document.getElementById('weightDate').value = getTodayString();
+      document.getElementById('weightValue').value = '';
+      document.getElementById('weightSleepStart').value = '';
+      document.getElementById('weightSleepEnd').value = '';
+      document.getElementById('editingWeightId').value = '';
+      document.getElementById('weightModalTitle').textContent = '体重记录';
+      document.getElementById('weightHistoryList').innerHTML = '<div class="loading">加载中...</div>';
+      document.getElementById('importSummary').textContent = '';
+      // 重置导入区域为折叠状态
+      document.getElementById('importContent').style.display = 'none';
+      document.getElementById('importToggleIcon').textContent = '▼';
+      importRowsData = [];
+
+      // 先检查今天是否已有记录
+      loadWeightHistory();
+      document.getElementById('weightModal').classList.add('active');
+    }
+
+    function loadTodayWeight() {
+      // 检查今天是否已有记录
+      fetch(`${API_BASE}/weight/history?userId=${currentUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          const today = getTodayString();
+          if (data.success && data.data && data.data.length > 0) {
+            const todayRecord = data.data.find(r => r.recordDate === today);
+            if (todayRecord) {
+              // 填充今天的记录到编辑区
+              document.getElementById('weightDate').value = todayRecord.recordDate;
+              document.getElementById('weightValue').value = todayRecord.weight;
+
+              // 处理时间格式，可能是 LocalTime 对象或字符串
+              let sleepStart = todayRecord.sleepStart;
+              let sleepEnd = todayRecord.sleepEnd;
+              if (typeof sleepStart === 'object' && sleepStart !== null) {
+                sleepStart = String(sleepStart.hour).padStart(2, '0') + ':' + String(sleepStart.minute).padStart(2, '0');
+              }
+              if (typeof sleepEnd === 'object' && sleepEnd !== null) {
+                sleepEnd = String(sleepEnd.hour).padStart(2, '0') + ':' + String(sleepEnd.minute).padStart(2, '0');
+              }
+
+              document.getElementById('weightSleepStart').value = sleepStart || '';
+              document.getElementById('weightSleepEnd').value = sleepEnd || '';
+              document.getElementById('editingWeightId').value = todayRecord.id;
+              document.getElementById('weightModalTitle').textContent = '今日体重（已记录）';
+
+              // 从历史记录中移除今天的记录
+              weightHistoryAll = data.data.filter(r => r.recordDate !== today);
+              weightHistoryPage = 1;
+              renderWeightHistory();
+            } else {
+              weightHistoryAll = data.data;
+              weightHistoryPage = 1;
+              renderWeightHistory();
+            }
+          } else {
+            weightHistoryAll = [];
+            weightHistoryPage = 1;
+            renderWeightHistory();
+          }
+        });
+    }
+
+    function hideWeightModal() {
+      document.getElementById('weightModal').classList.remove('active');
+    }
+
+    // ============ Exercise Modal ============
+    let exerciseRecords = [];
+    let exerciseHistoryPage = 1;
+
+    function showExerciseModal() {
+      document.getElementById('exerciseDate').value = getTodayString();
+      document.getElementById('exerciseType').value = '跑步';
+      document.getElementById('exerciseDuration').value = '';
+      document.getElementById('exerciseCalories').value = '';
+      document.getElementById('exerciseStartTime').value = '';
+      document.getElementById('exerciseEndTime').value = '';
+      document.getElementById('exerciseNote').value = '';
+      document.getElementById('editingExerciseId').value = '';
+
+      loadExerciseData();
+      document.getElementById('exerciseModal').classList.add('active');
+    }
+
+    function hideExerciseModal() {
+      document.getElementById('exerciseModal').classList.remove('active');
+    }
+
+    function loadExerciseData() {
+      const today = getTodayString();
+
+      // 加载今日汇总
+      fetch(`${API_BASE}/exercise/${currentUserId}/date/${today}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            document.getElementById('exerciseTotalDuration').textContent = data.data.totalDuration || 0;
+            document.getElementById('exerciseTotalCalories').textContent = data.data.totalCalories || 0;
+          } else {
+            document.getElementById('exerciseTotalDuration').textContent = '0';
+            document.getElementById('exerciseTotalCalories').textContent = '0';
+          }
+        });
+
+      // 加载历史记录
+      fetch(`${API_BASE}/exercise/${currentUserId}?days=30`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            exerciseRecords = data.data || [];
+            exerciseHistoryPage = 1;
+            renderExerciseHistory();
+          }
+        });
+    }
+
+    function renderExerciseHistory() {
+      const container = document.getElementById('exerciseHistoryList');
+      const pagination = document.getElementById('exercisePagination');
+
+      if (exerciseRecords.length === 0) {
+        container.innerHTML = '<div class="empty-history">暂无运动记录</div>';
+        pagination.style.display = 'none';
+        return;
+      }
+
+      const start = (exerciseHistoryPage - 1) * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const pageData = exerciseRecords.slice(start, end);
+      const totalPages = Math.ceil(exerciseRecords.length / PAGE_SIZE) || 1;
+
+      container.innerHTML = pageData.map(r => {
+        // 处理时间格式显示 startTime-endTime
+        let timeDisplay = '';
+        if (r.startTime || r.endTime) {
+          const formatTime = (t) => {
+            if (!t) return '';
+            if (typeof t === 'object' && t !== null) {
+              return String(t.hour).padStart(2, '0') + ':' + String(t.minute).padStart(2, '0');
+            }
+            return String(t).substring(0, 5);
+          };
+          const start = formatTime(r.startTime);
+          const end = formatTime(r.endTime);
+          timeDisplay = start + (end ? '-' + end : '');
+        }
+        return `<div class="history-item">
+          <div>
+            <div class="history-date">${r.recordDate} ${timeDisplay}</div>
+            <div class="history-value">${r.type || ''} ${r.duration || 0}分钟 ${r.calories || 0}kcal</div>
+          </div>
+          <div>
+            <span class="action-btn" onclick="editExercise(${r.id})">✏️</span>
+            <span class="action-btn" onclick="deleteExercise(${r.id})">🗑️</span>
+          </div>
+        </div>`;
+      }).join('');
+
+      pagination.style.display = 'flex';
+      pagination.innerHTML = `
+        <button onclick="prevExercisePage()" ${exerciseHistoryPage <= 1 ? 'disabled' : ''}>上一页</button>
+        <span>第${exerciseHistoryPage}/${totalPages}页</span>
+        <button onclick="nextExercisePage()" ${exerciseHistoryPage >= totalPages ? 'disabled' : ''}>下一页</button>
+        <span style="color:#999;font-size:11px;">共${exerciseRecords.length}条</span>
+      `;
+    }
+
+    function prevExercisePage() {
+      if (exerciseHistoryPage > 1) {
+        exerciseHistoryPage--;
+        renderExerciseHistory();
+      }
+    }
+
+    function nextExercisePage() {
+      const totalPages = Math.ceil(exerciseRecords.length / PAGE_SIZE);
+      if (exerciseHistoryPage < totalPages) {
+        exerciseHistoryPage++;
+        renderExerciseHistory();
+      }
+    }
+
+    function editExercise(id) {
+      const record = exerciseRecords.find(r => r.id === id);
+      if (!record) return;
+
+      document.getElementById('editingExerciseId').value = id;
+      document.getElementById('exerciseDate').value = record.recordDate || '';
+      document.getElementById('exerciseType').value = record.type || '跑步';
+      document.getElementById('exerciseDuration').value = record.duration || '';
+      document.getElementById('exerciseCalories').value = record.calories || '';
+
+      // 处理开始时间格式
+      let startTime = record.startTime;
+      if (startTime) {
+        if (typeof startTime === 'object' && startTime !== null) {
+          startTime = String(startTime.hour).padStart(2, '0') + ':' + String(startTime.minute).padStart(2, '0');
+        } else if (typeof startTime === 'string') {
+          startTime = startTime.substring(0, 5);
+        }
+      }
+      document.getElementById('exerciseStartTime').value = startTime || '';
+
+      // 处理结束时间格式
+      let endTime = record.endTime;
+      if (endTime) {
+        if (typeof endTime === 'object' && endTime !== null) {
+          endTime = String(endTime.hour).padStart(2, '0') + ':' + String(endTime.minute).padStart(2, '0');
+        } else if (typeof endTime === 'string') {
+          endTime = endTime.substring(0, 5);
+        }
+      }
+      document.getElementById('exerciseEndTime').value = endTime || '';
+
+      document.getElementById('exerciseNote').value = record.note || '';
+    }
+
+    function deleteExercise(id) {
+      if (!confirm('确定删除这条运动记录？')) return;
+      fetch(`${API_BASE}/exercise/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast('已删除');
+            loadExerciseData();
+          }
+        });
+    }
+
+    function saveExercise() {
+      const id = document.getElementById('editingExerciseId').value;
+      const recordDate = document.getElementById('exerciseDate').value;
+      const type = document.getElementById('exerciseType').value;
+      const duration = parseInt(document.getElementById('exerciseDuration').value) || 0;
+      const calories = parseInt(document.getElementById('exerciseCalories').value) || 0;
+      const startTime = document.getElementById('exerciseStartTime').value;
+      const endTime = document.getElementById('exerciseEndTime').value;
+      const note = document.getElementById('exerciseNote').value;
+
+      if (!recordDate) {
+        showToast('请选择日期');
+        return;
+      }
+
+      const body = {
+        userId: currentUserId,
+        type,
+        duration,
+        calories,
+        recordDate,
+        startTime: startTime || null,
+        endTime: endTime || null,
+        note
+      };
+
+      const url = id ? `${API_BASE}/exercise/${id}` : `${API_BASE}/exercise`;
+      const method = id ? 'PUT' : 'POST';
+
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast(id ? '已更新' : '已保存');
+            // 重置表单
+            document.getElementById('editingExerciseId').value = '';
+            document.getElementById('exerciseDuration').value = '';
+            document.getElementById('exerciseCalories').value = '';
+            document.getElementById('exerciseStartTime').value = '';
+            document.getElementById('exerciseEndTime').value = '';
+            document.getElementById('exerciseNote').value = '';
+            loadExerciseData();
+          } else {
+            showToast(data.message || '保存失败');
+          }
+        });
+    }
+
+    // ============ Diet Modal ============
+    let dietRecords = [];
+    let dietHistoryPage = 1;
+
+    function showDietModal() {
+      document.getElementById('dietDate').value = getTodayString();
+      document.getElementById('dietMealType').value = '早餐';
+      document.getElementById('dietFoods').value = '';
+      document.getElementById('dietCalories').value = '';
+      document.getElementById('dietNote').value = '';
+      document.getElementById('dietStartTime').value = '';
+      document.getElementById('dietEndTime').value = '';
+      document.getElementById('editingDietId').value = '';
+      document.getElementById('dietImagePreview').style.display = 'none';
+
+      loadDietData();
+      document.getElementById('dietModal').classList.add('active');
+    }
+
+    function hideDietModal() {
+      document.getElementById('dietModal').classList.remove('active');
+    }
+
+    function handleDietImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('dietImagePreviewImg').src = e.target.result;
+        document.getElementById('dietImagePreview').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function loadDietData() {
+      const today = getTodayString();
+
+      // 加载今日汇总
+      fetch(`${API_BASE}/diet/${currentUserId}/date/${today}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            document.getElementById('dietTotalCalories').textContent = data.data.totalCalories || 0;
+          } else {
+            document.getElementById('dietTotalCalories').textContent = '0';
+          }
+        });
+
+      // 加载历史记录
+      fetch(`${API_BASE}/diet/${currentUserId}?days=30`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            dietRecords = data.data || [];
+            dietHistoryPage = 1;
+            renderDietHistory();
+          }
+        });
+    }
+
+    function renderDietHistory() {
+      const container = document.getElementById('dietHistoryList');
+      const pagination = document.getElementById('dietPagination');
+
+      if (dietRecords.length === 0) {
+        container.innerHTML = '<div class="empty-history">暂无饮食记录</div>';
+        pagination.style.display = 'none';
+        return;
+      }
+
+      const start = (dietHistoryPage - 1) * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const pageData = dietRecords.slice(start, end);
+      const totalPages = Math.ceil(dietRecords.length / PAGE_SIZE) || 1;
+
+      container.innerHTML = pageData.map(r => {
+        const imageTag = r.imageUrl ? `<img src="${r.imageUrl}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;margin-left:4px;vertical-align:middle;">` : '';
+        // 处理时间格式显示 startTime-endTime
+        let timeDisplay = '';
+        if (r.startTime || r.endTime) {
+          const formatTime = (t) => {
+            if (!t) return '';
+            if (typeof t === 'object' && t !== null) {
+              return String(t.hour).padStart(2, '0') + ':' + String(t.minute).padStart(2, '0');
+            }
+            return String(t).substring(0, 5);
+          };
+          const start = formatTime(r.startTime);
+          const end = formatTime(r.endTime);
+          timeDisplay = start + (end ? '-' + end : '');
+        }
+        return `<div class="history-item">
+          <div>
+            <div class="history-date">${r.recordDate} ${r.mealType || ''} ${timeDisplay}</div>
+            <div class="history-value">${r.foods || ''}${imageTag}</div>
+          </div>
+          <div>
+            <span class="action-btn" onclick="editDiet(${r.id})">✏️</span>
+            <span class="action-btn" onclick="deleteDiet(${r.id})">🗑️</span>
+          </div>
+        </div>`;
+      }).join('');
+
+      pagination.style.display = 'flex';
+      pagination.innerHTML = `
+        <button onclick="prevDietPage()" ${dietHistoryPage <= 1 ? 'disabled' : ''}>上一页</button>
+        <span>第${dietHistoryPage}/${totalPages}页</span>
+        <button onclick="nextDietPage()" ${dietHistoryPage >= totalPages ? 'disabled' : ''}>下一页</button>
+        <span style="color:#999;font-size:11px;">共${dietRecords.length}条</span>
+      `;
+    }
+
+    function prevDietPage() {
+      if (dietHistoryPage > 1) {
+        dietHistoryPage--;
+        renderDietHistory();
+      }
+    }
+
+    function nextDietPage() {
+      const totalPages = Math.ceil(dietRecords.length / PAGE_SIZE);
+      if (dietHistoryPage < totalPages) {
+        dietHistoryPage++;
+        renderDietHistory();
+      }
+    }
+
+    function editDiet(id) {
+      const record = dietRecords.find(r => r.id === id);
+      if (!record) return;
+
+      document.getElementById('editingDietId').value = id;
+      document.getElementById('dietDate').value = record.recordDate || '';
+      document.getElementById('dietMealType').value = record.mealType || '早餐';
+      document.getElementById('dietFoods').value = record.foods || '';
+      document.getElementById('dietCalories').value = record.calories || '';
+      document.getElementById('dietNote').value = record.note || '';
+
+      // 处理开始时间格式
+      let startTime = record.startTime;
+      if (startTime) {
+        if (typeof startTime === 'object' && startTime !== null) {
+          startTime = String(startTime.hour).padStart(2, '0') + ':' + String(startTime.minute).padStart(2, '0');
+        } else if (typeof startTime === 'string') {
+          startTime = startTime.substring(0, 5);
+        }
+      }
+      document.getElementById('dietStartTime').value = startTime || '';
+
+      // 处理结束时间格式
+      let endTime = record.endTime;
+      if (endTime) {
+        if (typeof endTime === 'object' && endTime !== null) {
+          endTime = String(endTime.hour).padStart(2, '0') + ':' + String(endTime.minute).padStart(2, '0');
+        } else if (typeof endTime === 'string') {
+          endTime = endTime.substring(0, 5);
+        }
+      }
+      document.getElementById('dietEndTime').value = endTime || '';
+
+      if (record.imageUrl) {
+        document.getElementById('dietImagePreviewImg').src = record.imageUrl;
+        document.getElementById('dietImagePreview').style.display = 'block';
+      } else {
+        document.getElementById('dietImagePreview').style.display = 'none';
+      }
+    }
+
+    function deleteDiet(id) {
+      if (!confirm('确定删除这条饮食记录？')) return;
+      fetch(`${API_BASE}/diet/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast('已删除');
+            loadDietData();
+          }
+        });
+    }
+
+    function saveDiet() {
+      const id = document.getElementById('editingDietId').value;
+      const recordDate = document.getElementById('dietDate').value;
+      const mealType = document.getElementById('dietMealType').value;
+      const foods = document.getElementById('dietFoods').value;
+      const calories = parseInt(document.getElementById('dietCalories').value) || null;
+      const note = document.getElementById('dietNote').value;
+      const startTime = document.getElementById('dietStartTime').value;
+      const endTime = document.getElementById('dietEndTime').value;
+      const imageInput = document.getElementById('dietImage');
+      const imageUrl = imageInput.files.length > 0
+        ? document.getElementById('dietImagePreviewImg').src
+        : (document.querySelector('#dietImagePreview img')?.src || null);
+
+      if (!recordDate) {
+        showToast('请选择日期');
+        return;
+      }
+      if (!foods && !imageUrl) {
+        showToast('请填写食物描述或上传图片');
+        return;
+      }
+
+      const body = {
+        userId: currentUserId,
+        mealType,
+        foods,
+        calories,
+        imageUrl,
+        recordDate,
+        startTime: startTime || null,
+        endTime: endTime || null,
+        note
+      };
+
+      const url = id ? `${API_BASE}/diet/${id}` : `${API_BASE}/diet`;
+      const method = id ? 'PUT' : 'POST';
+
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast(id ? '已更新' : '已保存');
+            // 重置表单
+            document.getElementById('editingDietId').value = '';
+            document.getElementById('dietFoods').value = '';
+            document.getElementById('dietCalories').value = '';
+            document.getElementById('dietNote').value = '';
+            document.getElementById('dietStartTime').value = '';
+            document.getElementById('dietEndTime').value = '';
+            document.getElementById('dietImage').value = '';
+            document.getElementById('dietImagePreview').style.display = 'none';
+            loadDietData();
+          } else {
+            showToast(data.message || '保存失败');
+          }
+        });
+    }
+
+    function loadWeightHistory() {
+      // 调用 loadTodayWeight 来检查今天是否已有记录
+      loadTodayWeight();
+    }
+
+    function renderWeightHistory() {
+      const container = document.getElementById('weightHistoryList');
+      const pagination = document.getElementById('weightPagination');
+
+      // 如果历史记录为空
+      if (weightHistoryAll.length === 0) {
+        container.innerHTML = '<div class="empty-history">暂无历史记录</div>';
+        pagination.style.display = 'none';
+        return;
+      }
+
+      const start = (weightHistoryPage - 1) * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const pageData = weightHistoryAll.slice(start, end);
+      const totalPages = Math.ceil(weightHistoryAll.length / PAGE_SIZE) || 1;
+
+      container.innerHTML = pageData.map(r => `
+        <div class="history-item">
+          <div>
+            <div class="history-date">${r.recordDate}</div>
+            <div class="history-value">${r.weight}kg ${r.sleepStart ? r.sleepStart + '-' + r.sleepEnd : ''}</div>
+          </div>
+          <div>
+            <span class="action-btn" onclick="editWeightRecord(${r.id}, '${r.recordDate}', ${r.weight}, '${r.sleepStart || ''}', '${r.sleepEnd || ''}')">✏️</span>
+            <span class="action-btn" onclick="deleteWeightRecord(${r.id})">🗑️</span>
+          </div>
+        </div>
+      `).join('');
+
+      // 分页控制
+      pagination.style.display = 'flex';
+      pagination.innerHTML = `
+        <select onchange="changePageSize(this.value)">
+          <option value="7" ${PAGE_SIZE === 7 ? 'selected' : ''}>7条/页</option>
+          <option value="14" ${PAGE_SIZE === 14 ? 'selected' : ''}>14条/页</option>
+          <option value="30" ${PAGE_SIZE === 30 ? 'selected' : ''}>30条/页</option>
+        </select>
+        <button onclick="prevWeightPage()" ${weightHistoryPage <= 1 ? 'disabled' : ''}>上一页</button>
+        <span>
+          第<input type="number" id="jumpPageInput" value="${weightHistoryPage}" min="1" max="${totalPages}" onchange="jumpToPage(this.value)">/${totalPages}页
+        </span>
+        <button onclick="nextWeightPage()" ${weightHistoryPage >= totalPages ? 'disabled' : ''}>下一页</button>
+        <span style="color:#999;font-size:11px;">共${weightHistoryAll.length}条</span>
+      `;
+    }
+
+    function changePageSize(size) {
+      PAGE_SIZE = parseInt(size);
+      weightHistoryPage = 1;
+      renderWeightHistory();
+    }
+
+    function jumpToPage(page) {
+      const totalPages = Math.ceil(weightHistoryAll.length / PAGE_SIZE) || 1;
+      let targetPage = parseInt(page);
+      if (isNaN(targetPage) || targetPage < 1) targetPage = 1;
+      if (targetPage > totalPages) targetPage = totalPages;
+      weightHistoryPage = targetPage;
+      renderWeightHistory();
+    }
+
+    function prevWeightPage() {
+      if (weightHistoryPage > 1) {
+        weightHistoryPage--;
+        renderWeightHistory();
+      }
+    }
+
+    function nextWeightPage() {
+      const totalPages = Math.ceil(weightHistoryAll.length / PAGE_SIZE);
+      if (weightHistoryPage < totalPages) {
+        weightHistoryPage++;
+        renderWeightHistory();
+      }
+    }
+
+    function editWeightRecord(id, recordDate, weight, sleepStart, sleepEnd) {
+      document.getElementById('weightDate').value = recordDate;
+      document.getElementById('weightValue').value = weight;
+      document.getElementById('weightSleepStart').value = sleepStart || '';
+      document.getElementById('weightSleepEnd').value = sleepEnd || '';
+      document.getElementById('editingWeightId').value = id;
+      document.getElementById('weightModalTitle').textContent = '编辑体重';
+    }
+
+    function saveWeight() {
+      const id = document.getElementById('editingWeightId').value;
+      const recordDate = document.getElementById('weightDate').value;
+      const weight = parseFloat(document.getElementById('weightValue').value);
+      const sleepStart = document.getElementById('weightSleepStart').value;
+      const sleepEnd = document.getElementById('weightSleepEnd').value;
+
+      if (!weight) {
+        showToast('请输入体重');
+        return;
+      }
+
+      const body = { weight, sleepStart, sleepEnd, recordDate };
+
+      if (id) {
+        // 更新
+        fetch(`${API_BASE}/weight/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              showToast('更新成功');
+              hideWeightModal();
+            } else {
+              showToast(data.message || '更新失败');
+            }
+          });
+      } else {
+        // 新增
+        fetch(`${API_BASE}/weight/add?userId=${currentUserId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              showToast('记录成功');
+              hideWeightModal();
+            } else {
+              showToast(data.message || '记录失败');
+            }
+          });
+      }
+    }
+
+    function deleteWeightRecord(id) {
+      if (!confirm('确定要删除这条体重记录吗？')) return;
+
+      fetch(`${API_BASE}/weight/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast('已删除');
+            loadWeightHistory();
+          } else {
+            showToast('删除失败');
+          }
+        });
+    }
+
+    function importWeightHistory() {
+      const importText = document.getElementById('importTextarea').value.trim();
+      if (!importText) {
+        showToast('请输入要导入的历史记录');
+        return;
+      }
+
+      const lines = importText.split('\n').filter(line => line.trim());
+      const records = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const parts = lines[i].trim().split(/\s+/);
+        if (parts.length < 2) {
+          showToast(`第${i + 1}行格式错误，请使用：日期 体重`);
+          return;
+        }
+        const date = parts[0];
+        const weight = parseFloat(parts[1]);
+        if (!date || isNaN(weight)) {
+          showToast(`第${i + 1}行格式错误，请使用：日期 体重`);
+          return;
+        }
+        records.push({ recordDate: date, weight, sleepStart: '', sleepEnd: '' });
+      }
+
+      if (records.length === 0) {
+        showToast('没有有效的记录');
+        return;
+      }
+
+      showToast(`正在导入 ${records.length} 条记录...`);
+
+      // 批量导入
+      let successCount = 0;
+      let failCount = 0;
+      let completed = 0;
+
+      records.forEach(record => {
+        fetch(`${API_BASE}/weight/add?userId=${currentUserId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record)
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) successCount++;
+            else failCount++;
+            completed++;
+            if (completed === records.length) {
+              showToast(`导入完成：成功 ${successCount}，失败 ${failCount}`);
+              document.getElementById('importTextarea').value = '';
+              loadWeightHistory();
+            }
+          })
+          .catch(err => {
+            failCount++;
+            completed++;
+            if (completed === records.length) {
+              showToast(`导入完成：成功 ${successCount}，失败 ${failCount}`);
+              document.getElementById('importTextarea').value = '';
+              loadWeightHistory();
+            }
+          });
+      });
+    }
+
+    // ============ 批量导入新方法 ============
+    let importRowsData = []; // 存储导入行的数据
+    let batchUnit = 'kg'; // 批量设置的单位
+
+    function generateImportDates() {
+      if (!currentUser || !currentUser.startWeightDate) {
+        showToast('请先在档案中设置「开始减重日期」');
+        return;
+      }
+
+      // 先获取历史记录，只显示没有记录的日期
+      fetch(`${API_BASE}/weight/history?userId=${currentUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          const existingDates = new Set();
+          if (data.success && data.data) {
+            data.data.forEach(r => {
+              existingDates.add(r.recordDate);
+            });
+          }
+
+          const startDate = new Date(currentUser.startWeightDate);
+          const today = new Date();
+          today.setHours(23, 59, 59, 999);
+
+          if (startDate > today) {
+            showToast('开始减重日期不能晚于今天');
+            return;
+          }
+
+          importRowsData = [];
+          let currentDate = new Date(startDate);
+          let index = 0;
+
+          while (currentDate <= today) {
+            const dateStr = formatDate(currentDate);
+            // 跳过已有记录的日期
+            if (!existingDates.has(dateStr)) {
+              importRowsData.push({
+                index: index,
+                date: dateStr,
+                weight: '',
+                unit: batchUnit
+              });
+              index++;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+
+          if (importRowsData.length === 0) {
+            showToast('所有日期都已记录，无需导入');
+            return;
+          }
+
+          renderImportRows();
+          updateImportSummary();
+        })
+        .catch(() => {
+          showToast('加载历史记录失败');
+        });
+    }
+
+    function setBatchUnit(unit) {
+      batchUnit = unit;
+      // 更新所有行的单位
+      importRowsData.forEach(row => {
+        row.unit = unit;
+      });
+      // 更新下拉框
+      document.querySelectorAll('.weight-unit').forEach(select => {
+        select.value = unit;
+      });
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function renderImportRows() {
+      const container = document.getElementById('importRowsContainer');
+      if (importRowsData.length === 0) {
+        container.innerHTML = '<div class="import-empty">点击上方「生成日期」按钮</div>';
+        updateImportSummary();
+        return;
+      }
+
+      container.innerHTML = importRowsData.map((row, i) => `
+        <div class="import-row">
+          <span class="import-row-date">${row.date}</span>
+          <input type="number" step="0.1" placeholder="体重" value="${row.weight || ''}" data-index="${i}"
+                 style="width:70px;border-color:${row.weight ? '#4CAF50' : '#e0e0e0'}">
+          <select class="weight-unit" data-index="${i}" style="width:55px;padding:6px;border-radius:6px;border:1px solid #e0e0e0;font-size:12px;">
+            <option value="kg" ${row.unit !== 'jin' ? 'selected' : ''}>kg</option>
+            <option value="jin" ${row.unit === 'jin' ? 'selected' : ''}>斤</option>
+          </select>
+          <span class="delete-btn" onclick="removeImportRow(${i})">❌</span>
+        </div>
+      `).join('');
+
+      // 绑定体重输入框的change事件
+      container.querySelectorAll('.import-row input').forEach(input => {
+        input.addEventListener('change', function() {
+          const idx = parseInt(this.dataset.index);
+          const row = this.closest('.import-row');
+          const select = row.querySelector('.weight-unit');
+          updateImportRow(idx, this.value, select.value);
+        });
+      });
+
+      // 绑定单位选择器的change事件
+      container.querySelectorAll('.weight-unit').forEach(select => {
+        select.addEventListener('change', function() {
+          const idx = parseInt(this.dataset.index);
+          const row = this.closest('.import-row');
+          const input = row.querySelector('input');
+          updateImportRow(idx, input.value, this.value);
+        });
+      });
+
+      updateImportSummary();
+    }
+
+    function parseWeight(value, unit) {
+      if (!value) return '';
+      const num = parseFloat(value);
+      if (isNaN(num)) return '';
+
+      // 如果选择斤，自动转换
+      if (unit === 'jin') {
+        return (num / 2).toFixed(1);
+      }
+      return num.toString();
+    }
+
+    function updateImportRow(index, value, unit) {
+      importRowsData[index].weight = value;
+      importRowsData[index].unit = unit || 'kg';
+      renderImportRows();
+    }
+
+    function removeImportRow(index) {
+      importRowsData.splice(index, 1);
+      if (importRowsData.length === 0) {
+        document.getElementById('importRowsContainer').innerHTML = '<div class="import-empty">点击上方「生成日期」按钮</div>';
+      }
+      renderImportRows();
+    }
+
+    function updateImportSummary() {
+      const filled = importRowsData.filter(r => r.weight).length;
+      const total = importRowsData.length;
+      document.getElementById('importSummary').textContent = `共 ${total} 天，已填写 ${filled} 条`;
+    }
+
+    function submitImportRecords() {
+      const recordsToImport = importRowsData.filter(r => r.weight);
+
+      if (recordsToImport.length === 0) {
+        showToast('请至少填写一条体重记录');
+        return;
+      }
+
+      showToast(`正在导入 ${recordsToImport.length} 条记录...`);
+
+      let successCount = 0;
+      let failCount = 0;
+      let completed = 0;
+
+      recordsToImport.forEach(record => {
+        // 根据单位转换体重
+        let weight = parseFloat(record.weight);
+        if (record.unit === 'jin') {
+          weight = weight / 2; // 斤转公斤
+        }
+
+        fetch(`${API_BASE}/weight/add?userId=${currentUserId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recordDate: record.date,
+            weight: weight,
+            sleepStart: '',
+            sleepEnd: ''
+          })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) successCount++;
+            else failCount++;
+            completed++;
+            if (completed === recordsToImport.length) {
+              showToast(`导入完成：成功 ${successCount}，失败 ${failCount}`);
+              importRowsData = [];
+              document.getElementById('importRowsContainer').innerHTML = '<div class="import-empty">点击上方「生成日期」按钮</div>';
+              updateImportSummary();
+              loadWeightHistory();
+            }
+          })
+          .catch(() => {
+            failCount++;
+            completed++;
+            if (completed === recordsToImport.length) {
+              showToast(`导入完成：成功 ${successCount}，失败 ${failCount}`);
+              importRowsData = [];
+              loadWeightHistory();
+            }
+          });
+      });
+    }
+
+    // ============ Measurement Modal ============
+    function showMeasurementModal() {
+      document.getElementById('measurementDate').value = getTodayString();
+      document.getElementById('measurementBust').value = '';
+      document.getElementById('measurementWaist').value = '';
+      document.getElementById('measurementHip').value = '';
+      document.getElementById('measurementThigh').value = '';
+      document.getElementById('measurementUpperArm').value = '';
+      document.getElementById('measurementForearm').value = '';
+      document.getElementById('measurementCalf').value = '';
+      document.getElementById('measurementHistoryList').innerHTML = '<div class="loading">加载中...</div>';
+
+      loadMeasurementHistory();
+      document.getElementById('measurementModal').classList.add('active');
+    }
+
+    function hideMeasurementModal() {
+      cancelMeasurementEdit();
+      document.getElementById('measurementModal').classList.remove('active');
+    }
+
+    function loadMeasurementHistory() {
+      fetch(`${API_BASE}/measurements/${currentUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('measurementHistoryList');
+          if (data.success && data.data.length > 0) {
+            container.innerHTML = data.data.map(r => `
+              <div class="history-item">
+                <div>
+                  <div class="history-date">${r.recordDate}</div>
+                  <div class="history-value">
+                    ${r.chest ? '胸' + r.chest + 'cm ' : ''}
+                    ${r.waist ? '腰' + r.waist + 'cm ' : ''}
+                    ${r.hip ? '臀' + r.hip + 'cm ' : ''}
+                    ${r.thigh ? '大腿' + r.thigh + 'cm ' : ''}
+                    ${r.upperArm ? '大臂' + r.upperArm + 'cm ' : ''}
+                    ${r.forearm ? '小臂' + r.forearm + 'cm ' : ''}
+                    ${r.calf ? '小腿' + r.calf + 'cm' : ''}
+                  </div>
+                </div>
+                <div class="history-actions">
+                  <span class="action-btn" onclick="editMeasurement(${r.id}, '${r.recordDate}', ${r.chest || 'null'}, ${r.waist || 'null'}, ${r.hip || 'null'}, ${r.thigh || 'null'}, ${r.upperArm || 'null'}, ${r.forearm || 'null'}, ${r.calf || 'null'})">✏️</span>
+                  <span class="action-btn" onclick="deleteMeasurementRecord(${r.id})">🗑️</span>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            container.innerHTML = '<div class="empty-history">暂无记录</div>';
+          }
+        })
+        .catch(err => {
+          document.getElementById('measurementHistoryList').innerHTML = '<div class="empty-history">加载失败</div>';
+          console.error(err);
+        });
+    }
+
+    let editingMeasurementId = null;
+
+    function saveMeasurement() {
+      const recordDate = document.getElementById('measurementDate').value;
+      const chest = parseFloat(document.getElementById('measurementBust').value) || null;
+      const waist = parseFloat(document.getElementById('measurementWaist').value) || null;
+      const hip = parseFloat(document.getElementById('measurementHip').value) || null;
+      const thigh = parseFloat(document.getElementById('measurementThigh').value) || null;
+      const upperArm = parseFloat(document.getElementById('measurementUpperArm').value) || null;
+      const forearm = parseFloat(document.getElementById('measurementForearm').value) || null;
+      const calf = parseFloat(document.getElementById('measurementCalf').value) || null;
+
+      if (!chest && !waist && !hip && !thigh && !upperArm && !forearm && !calf) {
+        showToast('请至少输入一项维度');
+        return;
+      }
+
+      const body = { userId: parseInt(currentUserId), recordDate, chest, waist, hip, thigh, upperArm, forearm, calf };
+
+      const method = editingMeasurementId ? 'PUT' : 'POST';
+      const url = editingMeasurementId ? `${API_BASE}/measurements/${editingMeasurementId}` : `${API_BASE}/measurements`;
+
+      fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast(editingMeasurementId ? '更新成功' : '记录成功');
+            cancelMeasurementEdit();
+            hideMeasurementModal();
+          } else {
+            showToast(data.message || '操作失败');
+          }
+        });
+    }
+
+    function editMeasurement(id, recordDate, chest, waist, hip, thigh, upperArm, forearm, calf) {
+      editingMeasurementId = id;
+      document.getElementById('measurementDate').value = recordDate;
+      document.getElementById('measurementBust').value = chest || '';
+      document.getElementById('measurementWaist').value = waist || '';
+      document.getElementById('measurementHip').value = hip || '';
+      document.getElementById('measurementThigh').value = thigh || '';
+      document.getElementById('measurementUpperArm').value = upperArm || '';
+      document.getElementById('measurementForearm').value = forearm || '';
+      document.getElementById('measurementCalf').value = calf || '';
+      document.getElementById('measurementCancelBtn').style.display = 'inline-block';
+      document.querySelector('#measurementModal .save-btn').textContent = '更新记录';
+      showToast('正在编辑，记录日期: ' + recordDate);
+    }
+
+    function cancelMeasurementEdit() {
+      editingMeasurementId = null;
+      document.getElementById('measurementDate').value = '';
+      document.getElementById('measurementBust').value = '';
+      document.getElementById('measurementWaist').value = '';
+      document.getElementById('measurementHip').value = '';
+      document.getElementById('measurementThigh').value = '';
+      document.getElementById('measurementUpperArm').value = '';
+      document.getElementById('measurementForearm').value = '';
+      document.getElementById('measurementCalf').value = '';
+      document.getElementById('measurementCancelBtn').style.display = 'none';
+      document.querySelector('#measurementModal .save-btn').textContent = '保存记录';
+    }
+
+    function deleteMeasurementRecord(id) {
+      if (!confirm('确定要删除这条维度记录吗？')) return;
+
+      fetch(`${API_BASE}/measurements/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast('已删除');
+            loadMeasurementHistory();
+          } else {
+            showToast('删除失败');
+          }
+        });
+    }
+
+    // ============ Menstrual Modal ============
+    let menstrualRecords = [];
+    let currentMenstrualPhase = null;
+    let avgCycleLength = 28;
+    let predictedPeriodDays = [];
+    let selectedPeriodDays = new Set();
+    let pendingPeriodEndDate = null; // 等待确认经期结束的日期
+
+    // 日历相关变量
+    let calendarYear = new Date().getFullYear();
+    let calendarMonth = new Date().getMonth();
+    let importStartDate = null;
+    let importEndDate = null;
+
+    function showMenstrualModal() {
+      const now = new Date();
+      const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+      // 初始化年份下拉（当前年份前后5年）
+      const yearSelect = document.getElementById('menstrualYearSelect');
+      const monthSelect = document.getElementById('menstrualMonthSelect');
+      const currentYear = now.getFullYear();
+      yearSelect.innerHTML = '';
+      for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+        yearSelect.innerHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}年</option>`;
+      }
+      monthSelect.innerHTML = '';
+      for (let m = 0; m < 12; m++) {
+        monthSelect.innerHTML += `<option value="${m}" ${m === now.getMonth() ? 'selected' : ''}>${monthNames[m]}</option>`;
+      }
+
+      // Reset
+      calendarYear = now.getFullYear();
+      calendarMonth = now.getMonth();
+      importStartDate = null;
+      importEndDate = null;
+
+      document.getElementById('menstrualInPeriodToggle').checked = false;
+      document.getElementById('menstrualInPeriodInput').style.display = 'none';
+      document.getElementById('menstrualStartDate').value = '';
+      document.getElementById('menstrualPeriodHint').style.display = 'none';
+      document.getElementById('menstrualImportSelected').style.display = 'none';
+      selectedPeriodDays.clear();
+      predictedPeriodDays = [];
+      pendingPeriodEndDate = null;
+
+      loadMenstrualData();
+      renderUnifiedCalendar();
+      document.getElementById('menstrualModal').classList.add('active');
+
+      // 检查是否需要询问经期是否结束
+      checkPendingPeriodEnd();
+    }
+
+    function hideMenstrualModal() {
+      document.getElementById('menstrualModal').classList.remove('active');
+    }
+
+    function changeCalendarMonth(delta) {
+      calendarMonth += delta;
+      if (calendarMonth > 11) {
+        calendarMonth = 0;
+        calendarYear++;
+      } else if (calendarMonth < 0) {
+        calendarMonth = 11;
+        calendarYear--;
+      }
+      updateCalendarDropdowns();
+      renderUnifiedCalendar();
+    }
+
+    function onMenstrualYearChange() {
+      calendarYear = parseInt(document.getElementById('menstrualYearSelect').value);
+      updateCalendarTitle();
+      renderUnifiedCalendar();
+    }
+
+    function onMenstrualMonthChange() {
+      calendarMonth = parseInt(document.getElementById('menstrualMonthSelect').value);
+      updateCalendarTitle();
+      renderUnifiedCalendar();
+    }
+
+    function updateCalendarDropdowns() {
+      document.getElementById('menstrualYearSelect').value = calendarYear;
+      document.getElementById('menstrualMonthSelect').value = calendarMonth;
+    }
+
+    function updateCalendarTitle() {
+      const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+      document.getElementById('menstrualCalendarTitle').textContent = `${calendarYear}年${monthNames[calendarMonth]}`;
+    }
+
+    function getRecordedDaysInMonth(year, month) {
+      const recordedDays = [];
+      for (const record of menstrualRecords) {
+        if (!record.cycleStartDate) continue;
+
+        const startDate = new Date(record.cycleStartDate);
+        const endDate = record.cycleEndDate ? new Date(record.cycleEndDate) : null;
+
+        // 检查开始日期是否在当月
+        if (startDate.getFullYear() === year && startDate.getMonth() === month) {
+          recordedDays.push(record.cycleStartDate);
+        }
+
+        // 检查结束日期是否在当月
+        if (endDate && endDate.getFullYear() === year && endDate.getMonth() === month) {
+          recordedDays.push(record.cycleEndDate);
+        }
+
+        // 如果开始和结束都在当月之前，补充中间日期
+        if (startDate.getFullYear() === year && startDate.getMonth() === month && endDate) {
+          const current = new Date(startDate);
+          current.setDate(current.getDate() + 1);
+          while (current <= endDate) {
+            if (current.getFullYear() === year && current.getMonth() === month) {
+              const dateStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+              recordedDays.push(dateStr);
+            }
+            current.setDate(current.getDate() + 1);
+          }
+        }
+      }
+      return recordedDays;
+    }
+
+    function loadMenstrualData() {
+      Promise.all([
+        fetch(`${API_BASE}/menstrual/${currentUserId}/phase`).then(res => res.json()),
+        fetch(`${API_BASE}/menstrual/${currentUserId}`).then(res => res.json())
+      ])
+        .then(([phaseData, recordsData]) => {
+          if (phaseData.success) {
+            currentMenstrualPhase = phaseData.data;
+            avgCycleLength = phaseData.data.avgCycleLength || 28;
+            updateMenstrualDisplay();
+          }
+          if (recordsData.success) {
+            menstrualRecords = recordsData.data;
+          }
+          renderUnifiedCalendar();
+        })
+        .catch(err => console.error(err));
+    }
+
+    function checkPendingPeriodEnd() {
+      // 从 localStorage 获取待确认的经期结束信息
+      const pending = localStorage.getItem(`menstrual_pending_${currentUserId}`);
+      if (pending) {
+        const pendingData = JSON.parse(pending);
+        const targetDate = new Date(pendingData.targetDate);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        if (today >= targetDate) {
+          // 到了询问日期，弹出确认
+          setTimeout(() => {
+            if (confirm('经期结束了吗？如果已结束，请到经期记录中填写结束日期。')) {
+              // 用户确认，打开经期弹窗
+              document.getElementById('menstrualInPeriodToggle').checked = true;
+              onMenstrualToggleChange();
+            }
+          }, 500);
+          // 清除待确认状态
+          localStorage.removeItem(`menstrual_pending_${currentUserId}`);
+        }
+      }
+    }
+
+    function onMenstrualToggleChange() {
+      const isInPeriod = document.getElementById('menstrualInPeriodToggle').checked;
+      document.getElementById('menstrualInPeriodInput').style.display = isInPeriod ? 'block' : 'none';
+
+      if (!isInPeriod) {
+        // 关闭时，更新经期结束日期为今天
+        document.getElementById('menstrualStartDate').value = '';
+      }
+      updateMenstrualDisplay();
+    }
+
+    function updateMenstrualDisplay() {
+      if (!currentMenstrualPhase) return;
+
+      const phase = currentMenstrualPhase;
+      const predictionEl = document.getElementById('menstrualPrediction');
+      const periodHintEl = document.getElementById('menstrualPeriodHint');
+      const isInPeriod = document.getElementById('menstrualInPeriodToggle').checked;
+
+      // 经期中状态
+      if (isInPeriod) {
+        const startDateStr = document.getElementById('menstrualStartDate').value;
+        if (startDateStr) {
+          const startDate = new Date(startDateStr);
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const cycleDay = Math.floor((today - startDate) / (1000*60*60*24)) + 1;
+          const daysLeft = Math.max(0, 6 - cycleDay);
+
+          document.getElementById('menstrualCurrentDay').textContent = cycleDay;
+          document.getElementById('menstrualDaysLeft').textContent = daysLeft;
+          periodHintEl.style.display = 'block';
+
+          // 如果到了第5天，设置待确认
+          if (cycleDay >= 5 && daysLeft > 0) {
+            const targetDate = new Date(startDate);
+            targetDate.setDate(targetDate.getDate() + 5);
+            pendingPeriodEndDate = targetDate;
+          }
+        }
+
+        predictionEl.innerHTML = `
+          <div class="menstrual-prediction-phase">🤍 经期中</div>
+          <div class="menstrual-prediction-info">${phase.exerciseRecommendation || ''}</div>
+        `;
+      } else if (phase.phase === '经期' && phase.isInPeriod) {
+        // 有正在进行的经期记录
+        document.getElementById('menstrualInPeriodToggle').checked = true;
+        document.getElementById('menstrualInPeriodInput').style.display = 'block';
+        document.getElementById('menstrualStartDate').value = phase.lastPeriodStart;
+        periodHintEl.style.display = 'block';
+        document.getElementById('menstrualCurrentDay').textContent = phase.cycleDay;
+        document.getElementById('menstrualDaysLeft').textContent = phase.daysRemaining || 0;
+
+        predictionEl.innerHTML = `
+          <div class="menstrual-prediction-phase">🤍 处于经期第 ${phase.cycleDay} 天</div>
+          <div class="menstrual-prediction-info">${phase.exerciseRecommendation || ''}</div>
+        `;
+      } else {
+        // 非经期状态
+        periodHintEl.style.display = 'none';
+
+        // 检查是否可能处于经期（预测）
+        const cycleDay = phase.cycleDay;
+        const isPredictedPeriod = cycleDay && cycleDay <= 5;
+
+        predictionEl.innerHTML = `
+          <div class="menstrual-prediction-phase">${getPhaseEmoji(phase.phase)} ${phase.phase}</div>
+          ${isPredictedPeriod ? `<div class="menstrual-prediction-info">预测已处于经期第 ${cycleDay} 天</div>` :
+            (phase.daysUntilNextPeriod > 0 ? `<div class="menstrual-prediction-info">距离下次经期约 ${phase.daysUntilNextPeriod} 天</div>` :
+            '<div class="menstrual-prediction-info">经期预计即将到来</div>')}
+          ${phase.exerciseRecommendation ? `
+          <div class="menstrual-prediction-detail">
+            <div><strong>运动：</strong>${phase.exerciseRecommendation}</div>
+            <div style="margin-top:4px;"><strong>饮食：</strong>${phase.dietRecommendation}</div>
+          </div>
+          ` : ''}
+        `;
+      }
+    }
+
+    function getPhaseEmoji(phase) {
+      const emojis = {
+        '卵泡期': '🌱',
+        '排卵日': '🥚',
+        '黄体期': '🌼',
+        '经期未开始': '⏳',
+        '未记录经期': '📋'
+      };
+      return emojis[phase] || '📅';
+    }
+
+    function renderUnifiedCalendar() {
+      const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+      const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === calendarYear && today.getMonth() === calendarMonth;
+      const todayDay = isCurrentMonth ? today.getDate() : null;
+
+      // 获取当月已记录的经期
+      const recordedDays = getRecordedDaysInMonth(calendarYear, calendarMonth);
+
+      // 计算预测的经期日期
+      predictedPeriodDays = [];
+      if (currentMenstrualPhase && currentMenstrualPhase.lastPeriodStart && isCurrentMonth) {
+        const lastStart = new Date(currentMenstrualPhase.lastPeriodStart);
+        const daysSinceStart = Math.floor((today - lastStart) / (1000 * 60 * 60 * 24));
+        const nextPeriodStart = new Date(lastStart);
+        nextPeriodStart.setDate(nextPeriodStart.getDate() + avgCycleLength);
+        if (nextPeriodStart.getMonth() === calendarMonth && nextPeriodStart.getFullYear() === calendarYear) {
+          for (let i = 0; i < 5; i++) {
+            const d = new Date(nextPeriodStart);
+            d.setDate(d.getDate() + i);
+            if (d.getMonth() === calendarMonth) {
+              predictedPeriodDays.push(d.getDate());
+            }
+          }
+        }
+      }
+
+      const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+      let html = dayNames.map(d => `<div class="menstrual-calendar-day header">${d}</div>`).join('');
+
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="menstrual-calendar-day empty"></div>';
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        let classes = 'menstrual-calendar-day clickable';
+        const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isRecorded = recordedDays.includes(dateStr);
+        const isPredicted = predictedPeriodDays.includes(day);
+
+        if (day === todayDay) classes += ' today';
+
+        // 显示预测经期或已记录
+        if (isRecorded) {
+          classes += ' period recorded';
+        } else if (isPredicted) {
+          classes += ' period';
+        }
+
+        // 选中范围高亮
+        if (importStartDate && importEndDate) {
+          if (dateStr >= importStartDate && dateStr <= importEndDate) {
+            classes = classes.replace('period recorded', 'period active');
+          }
+        } else if (importStartDate && dateStr === importStartDate) {
+          classes += ' active';
+        }
+
+        // 已记录日期显示红点，预测经期显示灰点
+        let dayContent;
+        if (isRecorded) {
+          dayContent = `<span style="position:relative"><span style="font-size:11px;color:#FF6B6B;">${day}</span><span style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;background:#FF6B6B;border-radius:50%;"></span></span>`;
+        } else if (isPredicted) {
+          dayContent = `<span style="position:relative"><span style="font-size:10px;color:#999;">${day}</span><span style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;background:#ccc;border-radius:50%;"></span></span>`;
+        } else {
+          dayContent = day;
+        }
+
+        html += `<div class="${classes}" onclick="selectUnifiedDate('${dateStr}')">${dayContent}</div>`;
+      }
+
+      document.getElementById('menstrualCalendar').innerHTML = html;
+    }
+
+    function selectUnifiedDate(dateStr) {
+      const now = new Date();
+      const isCurrentMonth = calendarYear === now.getFullYear() && calendarMonth === now.getMonth();
+
+      // 检查是否点击在已有记录上（可删除）
+      const record = getRecordByDate(dateStr);
+      if (record) {
+        const action = confirm(`找到该日期的经期记录\n开始: ${record.cycleStartDate}\n${record.cycleEndDate ? '结束: ' + record.cycleEndDate : '尚未结束'}\n\n确定删除这条记录？`);
+        if (action) {
+          deleteMenstrualRecord(record.id);
+        }
+        return;
+      }
+
+      if (isCurrentMonth) {
+        // 当月 - 切换经期开关并设置开始日期
+        document.getElementById('menstrualInPeriodToggle').checked = true;
+        document.getElementById('menstrualInPeriodInput').style.display = 'block';
+        document.getElementById('menstrualStartDate').value = dateStr;
+        onMenstrualToggleChange();
+      } else {
+        // 历史月份 - 选择时间段后自动保存
+        document.getElementById('menstrualImportSelected').style.display = 'block';
+
+        if (!importStartDate || (importStartDate && importEndDate)) {
+          importStartDate = dateStr;
+          importEndDate = null;
+          updateImportSelectedDisplay();
+        } else if (importStartDate && !importEndDate) {
+          if (dateStr < importStartDate) {
+            importEndDate = importStartDate;
+            importStartDate = dateStr;
+          } else {
+            importEndDate = dateStr;
+          }
+          autoImportMenstrualRecord();
+        }
+        renderUnifiedCalendar();
+      }
+    }
+
+    function getRecordByDate(dateStr) {
+      for (const record of menstrualRecords) {
+        if (!record.cycleStartDate) continue;
+        const start = new Date(record.cycleStartDate);
+        const end = record.cycleEndDate ? new Date(record.cycleEndDate) : null;
+        const target = new Date(dateStr);
+
+        if (target >= start && (!end || target <= end)) {
+          return record;
+        }
+      }
+      return null;
+    }
+
+    function autoImportMenstrualRecord() {
+      const body = {
+        userId: parseInt(currentUserId),
+        cycleStartDate: importStartDate,
+        cycleEndDate: importEndDate,
+        isInPeriod: false,
+        flowLevel: 'medium'
+      };
+
+      fetch(`${API_BASE}/menstrual`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast('导入成功');
+            importStartDate = null;
+            importEndDate = null;
+            // 刷新数据
+            loadMenstrualData();
+          } else {
+            showToast(data.message || '导入失败');
+          }
+        });
+    }
+
+    function getRecordedDaysInMonth(year, month) {
+      const recordedDays = [];
+      for (const record of menstrualRecords) {
+        if (!record.cycleStartDate) continue;
+        const startDate = new Date(record.cycleStartDate);
+        const endDate = record.cycleEndDate ? new Date(record.cycleEndDate) : null;
+
+        // 检查开始日期是否在当月
+        if (startDate.getFullYear() === year && startDate.getMonth() === month) {
+          recordedDays.push(record.cycleStartDate);
+        }
+        // 检查结束日期是否在当月
+        if (endDate && endDate.getFullYear() === year && endDate.getMonth() === month) {
+          recordedDays.push(record.cycleEndDate);
+        }
+        // 补充中间日期
+        if (startDate.getFullYear() === year && startDate.getMonth() === month && endDate) {
+          const current = new Date(startDate);
+          current.setDate(current.getDate() + 1);
+          while (current <= endDate) {
+            if (current.getFullYear() === year && current.getMonth() === month) {
+              const dateStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+              recordedDays.push(dateStr);
+            }
+            current.setDate(current.getDate() + 1);
+          }
+        }
+      }
+      return recordedDays;
+    }
+
+    function updateImportSelectedDisplay() {
+      const selectedEl = document.getElementById('menstrualImportSelected');
+      if (!importStartDate) {
+        selectedEl.innerHTML = '<span class="selected-label">点击日历选择经期时间段</span>';
+      } else if (!importEndDate) {
+        selectedEl.innerHTML = `<span class="selected-dates">开始: ${formatDateDisplay(importStartDate)}</span>`;
+      } else {
+        const start = new Date(importStartDate);
+        const end = new Date(importEndDate);
+        const days = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        selectedEl.innerHTML = `<span class="selected-dates">${formatDateDisplay(importStartDate)} ~ ${formatDateDisplay(importEndDate)} (${days}天)</span>`;
+      }
+    }
+
+    function formatDateDisplay(dateStr) {
+      const d = new Date(dateStr);
+      return `${d.getMonth() + 1}月${d.getDate()}日`;
+    }
+
+    function loadMenstrualHistory() {
+      fetch(`${API_BASE}/menstrual/${currentUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          menstrualRecords = data.success ? data.data : [];
+          const container = document.getElementById('menstrualHistoryList');
+          const pagination = document.getElementById('menstrualPagination');
+
+          // 显示所有已结束的历史记录（不含当月）
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          const currentMonth = now.getMonth();
+
+          const historyRecords = menstrualRecords.filter(r => {
+            if (r.isInPeriod) return false;
+            const recordDate = new Date(r.cycleStartDate);
+            // 排除当月记录
+            if (recordDate.getFullYear() === currentYear && recordDate.getMonth() === currentMonth) return false;
+            return true;
+          });
+
+          const totalRecords = historyRecords.length;
+          const totalPages = Math.ceil(totalRecords / menstrualPageSize) || 1;
+          if (menstrualHistoryPage > totalPages) menstrualHistoryPage = totalPages;
+
+          const start = (menstrualHistoryPage - 1) * menstrualPageSize;
+          const end = start + menstrualPageSize;
+          const pageData = historyRecords.slice(start, end);
+
+          if (pageData.length > 0) {
+            container.innerHTML = pageData.map(r => {
+              const start = new Date(r.cycleStartDate);
+              const end = r.cycleEndDate ? new Date(r.cycleEndDate) : null;
+              const dateStr = end
+                ? `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`
+                : `${start.getMonth()+1}/${start.getDate()} 开始`;
+              const duration = r.cycleLength ? `${r.cycleLength}天` : '';
+
+              return `
+                <div class="history-item">
+                  <div>
+                    <div class="history-date">${r.cycleStartDate}</div>
+                    <div class="history-value">
+                      ${dateStr} ${duration}
+                      ${r.flowLevel === 'light' ? '| 少量' : r.flowLevel === 'heavy' ? '| 多量' : '| 中量'}
+                    </div>
+                  </div>
+                  <div class="history-actions">
+                    <span class="action-btn" onclick="deleteMenstrualRecord(${r.id})">🗑️</span>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+            pagination.style.display = 'flex';
+            pagination.innerHTML = `
+              <select onchange="changeMenstrualPageSize(this.value)">
+                <option value="7" ${menstrualPageSize === 7 ? 'selected' : ''}>7条/页</option>
+                <option value="14" ${menstrualPageSize === 14 ? 'selected' : ''}>14条/页</option>
+                <option value="30" ${menstrualPageSize === 30 ? 'selected' : ''}>30条/页</option>
+              </select>
+              <button onclick="prevMenstrualPage()" ${menstrualHistoryPage <= 1 ? 'disabled' : ''}>上一页</button>
+              <span>
+                第<input type="number" id="jumpMenstrualPageInput" value="${menstrualHistoryPage}" min="1" max="${totalPages}" onchange="jumpToMenstrualPage(this.value)">/${totalPages}页
+              </span>
+              <button onclick="nextMenstrualPage()" ${menstrualHistoryPage >= totalPages ? 'disabled' : ''}>下一页</button>
+              <span style="color:#999;font-size:11px;">共${totalRecords}条</span>
+            `;
+          } else {
+            container.innerHTML = '<div class="empty-history">暂无历史记录</div>';
+            pagination.style.display = 'none';
+          }
+        })
+        .catch(err => {
+          document.getElementById('menstrualHistoryList').innerHTML = '<div class="empty-history">加载失败</div>';
+          console.error(err);
+        });
+    }
+
+    function changeMenstrualPageSize(size) {
+      menstrualPageSize = parseInt(size);
+      menstrualHistoryPage = 1;
+      loadMenstrualHistory();
+    }
+
+    function getMenstrualHistoryRecords() {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      return menstrualRecords.filter(r => {
+        if (r.isInPeriod) return false;
+        const recordDate = new Date(r.cycleStartDate);
+        if (recordDate.getFullYear() === currentYear && recordDate.getMonth() === currentMonth) return false;
+        return true;
+      });
+    }
+
+    function jumpToMenstrualPage(page) {
+      const totalRecords = getMenstrualHistoryRecords().length;
+      const totalPages = Math.ceil(totalRecords / menstrualPageSize) || 1;
+      let targetPage = parseInt(page);
+      if (isNaN(targetPage) || targetPage < 1) targetPage = 1;
+      if (targetPage > totalPages) targetPage = totalPages;
+      menstrualHistoryPage = targetPage;
+      loadMenstrualHistory();
+    }
+
+    function prevMenstrualPage() {
+      if (menstrualHistoryPage > 1) {
+        menstrualHistoryPage--;
+        loadMenstrualHistory();
+      }
+    }
+
+    function nextMenstrualPage() {
+      const totalRecords = getMenstrualHistoryRecords().length;
+      const totalPages = Math.ceil(totalRecords / menstrualPageSize) || 1;
+      if (menstrualHistoryPage < totalPages) {
+        menstrualHistoryPage++;
+        loadMenstrualHistory();
+      }
+    }
+
+    function saveMenstrual() {
+      const cycleStartDate = document.getElementById('menstrualStartDate').value;
+
+      if (!cycleStartDate) {
+        showToast('请选择经期开始日期');
+        return;
+      }
+
+      // 询问结束日期
+      const endDateStr = prompt('请输入经期结束日期（格式：YYYY-MM-DD），如果还没结束请直接点击确定：', getTodayString());
+      let cycleEndDate = null;
+      if (endDateStr && endDateStr !== getTodayString()) {
+        cycleEndDate = endDateStr;
+      }
+
+      const body = {
+        userId: parseInt(currentUserId),
+        cycleStartDate,
+        cycleEndDate,
+        isInPeriod: !cycleEndDate,
+        flowLevel: 'medium'
+      };
+
+      fetch(`${API_BASE}/menstrual`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast(cycleEndDate ? '经期记录成功' : '经期开始已记录');
+            document.getElementById('menstrualInPeriodToggle').checked = false;
+            document.getElementById('menstrualInPeriodInput').style.display = 'none';
+            loadMenstrualData();
+            loadMenstrualHistory();
+
+            // 如果没有结束日期，设置5天后询问
+            if (!cycleEndDate) {
+              const startDate = new Date(cycleStartDate);
+              const targetDate = new Date(startDate);
+              targetDate.setDate(targetDate.getDate() + 5);
+              localStorage.setItem(`menstrual_pending_${currentUserId}`, JSON.stringify({ targetDate: targetDate.toISOString() }));
+            }
+          } else {
+            showToast(data.message || '记录失败');
+          }
+        });
+    }
+
+    function deleteMenstrualRecord(id) {
+      fetch(`${API_BASE}/menstrual/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast('已删除');
+            loadMenstrualData();
+          } else {
+            showToast('删除失败');
+          }
+        });
+    }
+
+    // ============ Profile Modal ============
+    function showProfileModal() {
+      if (currentUser) {
+        document.getElementById('profileNickname').value = currentUser.nickname || '';
+        document.getElementById('profileAge').value = currentUser.age || '';
+        document.getElementById('profileGender').value = currentUser.gender || '';
+        document.getElementById('profileHeight').value = currentUser.height || '';
+        document.getElementById('profileInitialWeight').value = currentUser.initialWeight || '';
+        document.getElementById('profileTargetWeight').value = currentUser.targetWeight || '';
+        document.getElementById('profileWeightLossPeriod').value = currentUser.weightLossPeriod || '';
+        document.getElementById('profileStartWeightDate').value = currentUser.startWeightDate || '';
+        document.getElementById('profileDietaryTaboo').value = currentUser.dietaryTaboo || '';
+        document.getElementById('profileSleepStart').value = currentUser.sleepStart || '';
+        document.getElementById('profileSleepEnd').value = currentUser.sleepEnd || '';
+      }
+      document.getElementById('profileModal').classList.add('active');
+    }
+
+    function hideProfileModal() {
+      document.getElementById('profileModal').classList.remove('active');
+    }
+
+    function saveProfile() {
+      const body = {
+        nickname: document.getElementById('profileNickname').value,
+        age: parseInt(document.getElementById('profileAge').value) || null,
+        gender: parseInt(document.getElementById('profileGender').value) || null,
+        height: parseFloat(document.getElementById('profileHeight').value) || null,
+        initialWeight: parseFloat(document.getElementById('profileInitialWeight').value) || null,
+        targetWeight: parseFloat(document.getElementById('profileTargetWeight').value) || null,
+        weightLossPeriod: parseInt(document.getElementById('profileWeightLossPeriod').value) || null,
+        startWeightDate: document.getElementById('profileStartWeightDate').value || null,
+        dietaryTaboo: document.getElementById('profileDietaryTaboo').value,
+        sleepStart: document.getElementById('profileSleepStart').value,
+        sleepEnd: document.getElementById('profileSleepEnd').value
+      };
+
+      fetch(`${API_BASE}/user/${currentUserId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast('保存成功');
+            currentUser = data.data;
+            updateUserInfo();
+            hideProfileModal();
+          } else {
+            showToast(data.message || '保存失败');
+          }
+        });
+    }
+
+    // 点击模态框外部关闭
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('active');
+        }
+      });
+    });
+
+    // ============ Init ============
+    // 确保所有modal默认隐藏
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.classList.remove('active');
+    });
+
+    if (currentUserId) {
+      login();
+    }
+  </script>
+</body>
+</html>

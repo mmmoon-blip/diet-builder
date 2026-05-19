@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>减减 - 减肥管家</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .user-info {
+            font-size: 12px;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .message.bot {
+            background: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .message.user {
+            background: #FF6B6B;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message.loading {
+            color: #999;
+            font-style: italic;
+        }
+        .input-container {
+            padding: 16px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+        }
+        .input-container input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+        }
+        .input-container input:focus {
+            border-color: #FF6B6B;
+        }
+        .input-container button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .input-container button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .welcome {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+        .welcome-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        .typing-indicator {
+            display: inline-block;
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 20px 20px 0 0;
+            padding: 24px;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .profile-section {
+            margin-bottom: 24px;
+        }
+        .profile-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #FF6B6B;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ffe5e5;
+        }
+        .profile-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .profile-item:last-child {
+            border-bottom: none;
+        }
+        .profile-item label {
+            color: #666;
+            font-size: 14px;
+        }
+        .profile-item input {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            text-align: right;
+            width: 160px;
+            box-sizing: border-box;
+        }
+        .profile-item input:focus {
+            outline: none;
+            border-color: #FF6B6B;
+        }
+        .profile-item select {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .profile-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: #ddd;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: #FF6B6B;
+        }
+        .toggle-switch::after {
+            content: '';
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+        .toggle-switch.active::after {
+            left: 24px;
+        }
+        .save-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        .save-btn:active {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h1>减减 🤍</h1>
+                <p>您的减肥小管家</p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                <button onclick="showWeightModal()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; border-radius: 16px; font-size: 13px; cursor: pointer;">⚖️ 体重</button>
+                <button onclick="showMeasurementModal()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; border-radius: 16px; font-size: 13px; cursor: pointer;">📏 维度</button>
+                <button onclick="showMenstrualModal()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; border-radius: 16px; font-size: 13px; cursor: pointer;">🩸 经期</button>
+                <button onclick="showProfileModal()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; border-radius: 16px; font-size: 13px; cursor: pointer;">👤 档案</button>
+            </div>
+        </div>
+        <div class="user-info" id="userInfo">加载中...</div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="welcome">
+            <div class="welcome-icon">👋</div>
+            <p id="greeting">早安呀～我是减减，你的减肥小管家！有什么想和我分享的吗？😊</p>
+        </div>
+    </div>
+
+    <div class="input-container">
+        <input type="text" id="messageInput" placeholder="输入消息，如：今天体重70公斤了" onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()" id="sendBtn">发送</button>
+    </div>
+
+    <script>
+        let userId = null;
+        let userData = null;
+        const API_BASE = 'http://localhost:8080/api';
+
+        // 档案弹窗
+        let editData = {};
+
+        function showProfileModal() {
+            editData = {
+                nickname: userData.nickname || '',
+                age: userData.age || '',
+                gender: userData.gender || '',
+                height: userData.height || '',
+                initialWeight: userData.initialWeight || '',
+                targetWeight: userData.targetWeight || '',
+                weightLossPeriod: userData.weightLossPeriod || '',
+                startWeightDate: userData.startWeightDate || '',
+                dietaryTaboo: userData.dietaryTaboo || '',
+                sleepStart: userData.sleepStart || '',
+                sleepEnd: userData.sleepEnd || '',
+                reminderEnabled: userData.reminderEnabled !== false,
+                reminderIntervalHours: userData.reminderIntervalHours || 24
+            };
+
+            document.getElementById('modalNickname').value = editData.nickname;
+            document.getElementById('modalAge').value = editData.age;
+            document.getElementById('modalGender').value = editData.gender || '';
+            document.getElementById('modalHeight').value = editData.height;
+            document.getElementById('modalInitialWeight').value = editData.initialWeight;
+            document.getElementById('modalTargetWeight').value = editData.targetWeight;
+            document.getElementById('modalWeightLossPeriod').value = editData.weightLossPeriod;
+            document.getElementById('modalStartWeightDate').value = editData.startWeightDate ? editData.startWeightDate.split('T')[0] : '';
+            document.getElementById('modalDietaryTaboo').value = editData.dietaryTaboo;
+            document.getElementById('modalSleepStart').value = editData.sleepStart ? editData.sleepStart.substring(0, 5) : '';
+            document.getElementById('modalSleepEnd').value = editData.sleepEnd ? editData.sleepEnd.substring(0, 5) : '';
+
+            const toggle = document.getElementById('modalReminderToggle');
+            toggle.classList.toggle('active', editData.reminderEnabled);
+            document.getElementById('modalReminderInterval').value = editData.reminderIntervalHours;
+
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        function hideProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        function toggleReminder() {
+            editData.reminderEnabled = !editData.reminderEnabled;
+            const toggle = document.getElementById('modalReminderToggle');
+            toggle.classList.toggle('active', editData.reminderEnabled);
+        }
+
+        async function saveProfile() {
+            // 收集表单数据
+            const nickname = document.getElementById('modalNickname').value.trim();
+            const age = parseInt(document.getElementById('modalAge').value) || null;
+            const gender = parseInt(document.getElementById('modalGender').value) || null;
+            const height = parseFloat(document.getElementById('modalHeight').value) || null;
+            const initialWeight = parseFloat(document.getElementById('modalInitialWeight').value) || null;
+            const targetWeight = parseFloat(document.getElementById('modalTargetWeight').value) || null;
+            const weightLossPeriod = parseInt(document.getElementById('modalWeightLossPeriod').value) || null;
+            const startWeightDate = document.getElementById('modalStartWeightDate').value || null;
+            const dietaryTaboo = document.getElementById('modalDietaryTaboo').value.trim() || null;
+            const sleepStart = document.getElementById('modalSleepStart').value || null;
+            const sleepEnd = document.getElementById('modalSleepEnd').value || null;
+            const reminderIntervalHours = parseInt(document.getElementById('modalReminderInterval').value) || 24;
+
+            hideProfileModal();
+            addMessage('保存档案...', 'bot');
+
+            try {
+                const res = await fetch(`${API_BASE}/user/${userId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({nickname, age, gender, height, initialWeight, targetWeight, weightLossPeriod, startWeightDate, dietaryTaboo, sleepStart, sleepEnd, reminderIntervalHours})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    addMessage('档案已保存！✅', 'bot');
+                    refreshUserData();
+                } else {
+                    addMessage('保存失败，请重试～', 'bot');
+                }
+            } catch (e) {
+                addMessage('网络出错了～', 'bot');
+            }
+        }
+
+        // 体重记录弹窗
+        async function showWeightModal() {
+            document.getElementById('modalWeightDate').value = '';
+            document.getElementById('modalWeight').value = '';
+            document.getElementById('modalWeightSleepStart').value = '';
+            document.getElementById('modalWeightSleepEnd').value = '';
+
+            // 加载历史记录
+            try {
+                const res = await fetch(`${API_BASE}/weight/history?userId=${userId}`);
+                const data = await res.json();
+                if (data.success && data.data.length > 0) {
+                    let html = '<table style="width:100%;font-size:13px;border-collapse:collapse;">';
+                    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;border:1px solid #ddd;">日期</th><th style="padding:6px;border:1px solid #ddd;">体重</th><th style="padding:6px;border:1px solid #ddd;">睡眠</th><th style="padding:6px;border:1px solid #ddd;">操作</th></tr>';
+                    data.data.slice(0, 10).forEach(r => {
+                        html += `<tr>
+                            <td style="padding:6px;border:1px solid #ddd;">${r.recordDate}</td>
+                            <td style="padding:6px;border:1px solid #ddd;">${r.weight}kg</td>
+                            <td style="padding:6px;border:1px solid #ddd;">${r.sleepStart||'-'}-${r.sleepEnd||'-'}</td>
+                            <td style="padding:6px;border:1px solid #ddd;">
+                                <button onclick="editWeightRecord(${r.id}, '${r.recordDate}', ${r.weight}, '${r.sleepStart||''}', '${r.sleepEnd||''}')" style="background:#FF9800;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;margin-right:4px;font-size:16px;" title="编辑">✏️</button>
+                                <button onclick="deleteWeightRecord(${r.id})" style="background:#f44336;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:16px;" title="删除">🗑️</button>
+                            </td>
+                        </tr>`;
+                    });
+                    html += '</table>';
+                    document.getElementById('weightHistoryList').innerHTML = html;
+                } else {
+                    document.getElementById('weightHistoryList').innerHTML = '<div style="color:#999;font-size:13px;">暂无记录</div>';
+                }
+            } catch (e) {
+                document.getElementById('weightHistoryList').innerHTML = '<div style="color:#999;font-size:13px;">加载失败</div>';
+            }
+
+            document.getElementById('weightModal').classList.add('active');
+        }
+
+        function hideWeightModal() {
+            document.getElementById('weightModal').classList.remove('active');
+        }
+
+        async function saveWeight() {
+            const recordDate = document.getElementById('modalWeightDate').value || null;
+            const weight = parseFloat(document.getElementById('modalWeight').value) || null;
+            const sleepStart = document.getElementById('modalWeightSleepStart').value || null;
+            const sleepEnd = document.getElementById('modalWeightSleepEnd').value || null;
+            const editId = document.getElementById('modalWeight').dataset.editId;
+
+            if (!weight) {
+                alert('请输入体重');
+                return;
+            }
+
+            hideWeightModal();
+
+            try {
+                let res, data;
+                if (editId) {
+                    // 更新
+                    res = await fetch(`${API_BASE}/weight/${editId}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({weight, sleepStart, sleepEnd, recordDate})
+                    });
+                    data = await res.json();
+                    if (data.success) addMessage('体重更新成功！⚖️', 'bot');
+                    else addMessage('更新失败，请重试～', 'bot');
+                    delete document.getElementById('modalWeight').dataset.editId;
+                } else {
+                    // 新增
+                    addMessage(`记录体重：${weight}kg`, 'user');
+                    res = await fetch(`${API_BASE}/weight/add?userId=${userId}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({weight, sleepStart, sleepEnd, recordDate})
+                    });
+                    data = await res.json();
+                    if (data.success) addMessage('体重记录成功！⚖️', 'bot');
+                    else addMessage('记录失败，请重试～', 'bot');
+                }
+            } catch (e) {
+                addMessage('网络出错了～', 'bot');
+            }
+        }
+
+        function editWeightRecord(id, recordDate, weight, sleepStart, sleepEnd) {
+            document.getElementById('modalWeightDate').value = recordDate;
+            document.getElementById('modalWeight').value = weight;
+            document.getElementById('modalWeightSleepStart').value = sleepStart || '';
+            document.getElementById('modalWeightSleepEnd').value = sleepEnd || '';
+            document.getElementById('modalWeight').dataset.editId = id;
+            document.getElementById('modalWeight').scrollIntoView({behavior: 'smooth'});
+        }
+
+        async function deleteWeightRecord(id) {
+            if (!confirm('确认删除这条体重记录？')) return;
+            try {
+                const res = await fetch(`${API_BASE}/weight/${id}`, {method: 'DELETE'});
+                const data = await res.json();
+                if (data.success) {
+                    showWeightModal();
+                } else {
+                    alert('删除失败');
+                }
+            } catch (e) {
+                alert('删除失败');
+            }
+        }
+
+        let weightImportList = [];
+
+        function addWeightImportRow() {
+            const date = document.getElementById('modalWeightImportDate').value;
+            const weight = document.getElementById('modalWeightImportWeight').value;
+            const sleepStart = document.getElementById('modalWeightSleepStart').value;
+            const sleepEnd = document.getElementById('modalWeightSleepEnd').value;
+
+            if (!date || !weight) {
+                alert('请填写日期和体重');
+                return;
+            }
+
+            weightImportList.push({recordDate: date, weight: parseFloat(weight), sleepStart, sleepEnd});
+            document.getElementById('modalWeightImportDate').value = '';
+            document.getElementById('modalWeightImportWeight').value = '';
+
+            renderWeightImportRows();
+        }
+
+        function renderWeightImportRows() {
+            const container = document.getElementById('weightImportRows');
+            if (weightImportList.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('btnImportWeight').style.display = 'none';
+                return;
+            }
+
+            let html = '<table style="width:100%;font-size:12px;border-collapse:collapse;"><tr style="background:#f5f5f5;"><th style="padding:4px;border:1px solid #ddd;">日期</th><th style="padding:4px;border:1px solid #ddd;">体重</th><th style="padding:4px;border:1px solid #ddd;">睡眠</th><th style="padding:4px;border:1px solid #ddd;"></th></tr>';
+            weightImportList.forEach((r, i) => {
+                html += `<tr>
+                    <td style="padding:4px;border:1px solid #ddd;">${r.recordDate}</td>
+                    <td style="padding:4px;border:1px solid #ddd;">${r.weight}kg</td>
+                    <td style="padding:4px;border:1px solid #ddd;">${r.sleepStart || '-'} ~ ${r.sleepEnd || '-'}</td>
+                    <td style="padding:4px;border:1px solid #ddd;"><button onclick="removeWeightImportRow(${i})" style="color:red;background:none;border:none;cursor:pointer;">删除</button></td>
+                </tr>`;
+            });
+            html += '</table>';
+            container.innerHTML = html;
+            document.getElementById('btnImportWeight').style.display = 'block';
+        }
+
+        function removeWeightImportRow(index) {
+            weightImportList.splice(index, 1);
+            renderWeightImportRows();
+        }
+
+        async function importWeightRecords() {
+            if (weightImportList.length === 0) return;
+
+            hideWeightModal();
+            addMessage(`导入体重记录：${weightImportList.length}条`, 'user');
+
+            let success = 0;
+            for (const r of weightImportList) {
+                try {
+                    const res = await fetch(`${API_BASE}/weight/add?userId=${userId}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(r)
+                    });
+                    if (res.ok) success++;
+                } catch (e) {}
+            }
+
+            weightImportList = [];
+            renderWeightImportRows();
+
+            if (success > 0) {
+                addMessage(`成功导入${success}条体重记录！⚖️`, 'bot');
+            } else {
+                addMessage('导入失败，请重试～', 'bot');
+            }
+        }
+
+        // 维度记录弹窗
+        async function showMeasurementModal() {
+            document.getElementById('modalMeasurementDate').value = '';
+            document.getElementById('modalWaist').value = '';
+            document.getElementById('modalHip').value = '';
+            document.getElementById('modalChest').value = '';
+            document.getElementById('modalArm').value = '';
+            document.getElementById('modalThigh').value = '';
+
+            // 加载历史记录
+            try {
+                const res = await fetch(`${API_BASE}/measurements/${userId}?days=30`);
+                const data = await res.json();
+                if (data.success && data.data.length > 0) {
+                    let html = '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+                    html += '<tr style="background:#f5f5f5;"><th style="padding:4px;border:1px solid #ddd;">日期</th><th style="padding:4px;border:1px solid #ddd;">腰</th><th style="padding:4px;border:1px solid #ddd;">臀</th><th style="padding:4px;border:1px solid #ddd;">胸</th><th style="padding:4px;border:1px solid #ddd;">臂</th><th style="padding:4px;border:1px solid #ddd;">腿</th><th style="padding:4px;border:1px solid #ddd;">操作</th></tr>';
+                    data.data.forEach(r => {
+                        html += `<tr>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.recordDate}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.waist||'-'}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.hip||'-'}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.chest||'-'}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.arm||'-'}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.thigh||'-'}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">
+                                <button onclick="editMeasurementRecord(${r.id}, '${r.recordDate}', ${r.waist||0}, ${r.hip||0}, ${r.chest||0}, ${r.arm||0}, ${r.thigh||0})" style="background:#FF9800;color:white;border:none;padding:4px 6px;border-radius:4px;cursor:pointer;margin-right:2px;font-size:14px;" title="编辑">✏️</button>
+                                <button onclick="deleteMeasurementRecord(${r.id})" style="background:#f44336;color:white;border:none;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:14px;" title="删除">🗑️</button>
+                            </td>
+                        </tr>`;
+                    });
+                    html += '</table>';
+                    document.getElementById('measurementHistoryList').innerHTML = html;
+                } else {
+                    document.getElementById('measurementHistoryList').innerHTML = '<div style="color:#999;font-size:13px;">暂无记录</div>';
+                }
+            } catch (e) {
+                document.getElementById('measurementHistoryList').innerHTML = '<div style="color:#999;font-size:13px;">加载失败</div>';
+            }
+
+            document.getElementById('measurementModal').classList.add('active');
+        }
+
+        function hideMeasurementModal() {
+            document.getElementById('measurementModal').classList.remove('active');
+        }
+
+        async function saveMeasurement() {
+            const recordDate = document.getElementById('modalMeasurementDate').value || null;
+            const waist = parseFloat(document.getElementById('modalWaist').value) || null;
+            const hip = parseFloat(document.getElementById('modalHip').value) || null;
+            const chest = parseFloat(document.getElementById('modalChest').value) || null;
+            const arm = parseFloat(document.getElementById('modalArm').value) || null;
+            const thigh = parseFloat(document.getElementById('modalThigh').value) || null;
+            const editId = document.getElementById('modalWaist').dataset.editId;
+
+            if (!waist && !hip && !chest && !arm && !thigh) {
+                alert('请至少填写一项维度数据');
+                return;
+            }
+
+            hideMeasurementModal();
+
+            try {
+                let res, data;
+                if (editId) {
+                    res = await fetch(`${API_BASE}/measurements/${editId}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({userId, waist, hip, chest, arm, thigh, recordDate})
+                    });
+                    data = await res.json();
+                    if (data.success) addMessage('维度更新成功！📏', 'bot');
+                    else addMessage('更新失败，请重试～', 'bot');
+                    delete document.getElementById('modalWaist').dataset.editId;
+                } else {
+                    addMessage(`记录维度：腰${waist||'-'}cm 臀${hip||'-'}cm 胸${chest||'-'}cm 臂${arm||'-'}cm 腿${thigh||'-'}cm`, 'user');
+                    res = await fetch(`${API_BASE}/measurements`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({userId, waist, hip, chest, arm, thigh, recordDate})
+                    });
+                    data = await res.json();
+                    if (data.success) addMessage('维度记录成功！📏', 'bot');
+                    else addMessage('记录失败，请重试～', 'bot');
+                }
+            } catch (e) {
+                addMessage('网络出错了～', 'bot');
+            }
+        }
+
+        function editMeasurementRecord(id, recordDate, waist, hip, chest, arm, thigh) {
+            document.getElementById('modalMeasurementDate').value = recordDate;
+            document.getElementById('modalWaist').value = waist || '';
+            document.getElementById('modalHip').value = hip || '';
+            document.getElementById('modalChest').value = chest || '';
+            document.getElementById('modalArm').value = arm || '';
+            document.getElementById('modalThigh').value = thigh || '';
+            document.getElementById('modalWaist').dataset.editId = id;
+            document.getElementById('modalWaist').scrollIntoView({behavior: 'smooth'});
+        }
+
+        async function deleteMeasurementRecord(id) {
+            if (!confirm('确认删除这条维度记录？')) return;
+            try {
+                const res = await fetch(`${API_BASE}/measurements/${id}`, {method: 'DELETE'});
+                const data = await res.json();
+                if (data.success) {
+                    showMeasurementModal();
+                } else {
+                    alert('删除失败');
+                }
+            } catch (e) {
+                alert('删除失败');
+            }
+        }
+
+        // 经期记录弹窗
+        let lastMenstrualRecord = null; // 存储最新经期记录
+
+        async function showMenstrualModal() {
+            // 先获取当前阶段和最新记录
+            document.getElementById('modalCycleStart').value = '';
+            document.getElementById('modalCycleEnd').value = '';
+            document.getElementById('modalFlowLevel').value = '';
+            document.getElementById('modalOtherInfo').value = '';
+            document.querySelectorAll('input[name="isInPeriod"]').forEach(r => r.checked = false);
+            document.querySelectorAll('input[name="hasPain"]').forEach(r => r.checked = false);
+
+            // 获取当前经期阶段
+            try {
+                const res = await fetch(`${API_BASE}/menstrual/${userId}/phase`);
+                const data = await res.json();
+                if (data.success && data.data.phase) {
+                    const p = data.data;
+                    let info = `📍 当前阶段：${p.phase}`;
+                    if (p.cycleDay) info += `（第${p.cycleDay}天）`;
+                    if (p.daysUntilNextPeriod) info += `\n距离下次经期约${p.daysUntilNextPeriod}天`;
+                    info += `\n\n💪 运动：${p.exerciseRecommendation}`;
+                    info += `\n\n🍽️ 饮食：${p.dietRecommendation}`;
+                    info += `\n\n😊 状态：${p.bodyStatus}`;
+                    document.getElementById('menstrualPhaseInfo').innerHTML = info.replace(/\n/g, '<br>');
+                } else {
+                    document.getElementById('menstrualPhaseInfo').innerHTML = '暂无经期数据，请先记录';
+                }
+            } catch (e) {
+                document.getElementById('menstrualPhaseInfo').innerHTML = '暂无经期数据，请先记录';
+            }
+
+            // 获取最新经期记录用于回显
+            try {
+                const historyRes = await fetch(`${API_BASE}/menstrual/${userId}`);
+                const historyData = await historyRes.json();
+                if (historyData.success && historyData.data && historyData.data.length > 0) {
+                    lastMenstrualRecord = historyData.data[0];
+                    // 如果当前处于经期，显示经期开始日期
+                    if (lastMenstrualRecord.isInPeriod === true) {
+                        document.getElementById('modalCycleStart').value = lastMenstrualRecord.cycleStartDate || '';
+                        document.querySelector('input[name="isInPeriod"][value="true"]').checked = true;
+                        onIsInPeriodChange(true);
+                    } else {
+                        // 不在经期，显示最近一次经期开始结束时间
+                        document.getElementById('modalCycleStart').value = lastMenstrualRecord.cycleStartDate || '';
+                        document.getElementById('modalCycleEnd').value = lastMenstrualRecord.cycleEndDate || '';
+                        document.querySelector('input[name="isInPeriod"][value="false"]').checked = true;
+                        onIsInPeriodChange(false);
+                        // 回显其他字段
+                        if (lastMenstrualRecord.flowLevel) {
+                            document.getElementById('modalFlowLevel').value = lastMenstrualRecord.flowLevel;
+                        }
+                        if (lastMenstrualRecord.hasPain !== null && lastMenstrualRecord.hasPain !== undefined) {
+                            document.querySelector('input[name="hasPain"][value="' + lastMenstrualRecord.hasPain + '"]').checked = true;
+                        }
+                        if (lastMenstrualRecord.otherInfo) {
+                            document.getElementById('modalOtherInfo').value = lastMenstrualRecord.otherInfo;
+                        }
+                    }
+
+                    // 显示历史记录列表
+                    let html = '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+                    html += '<tr style="background:#f5f5f5;"><th style="padding:4px;border:1px solid #ddd;">日期</th><th style="padding:4px;border:1px solid #ddd;">状态</th><th style="padding:4px;border:1px solid #ddd;">经量</th><th style="padding:4px;border:1px solid #ddd;">疼痛</th><th style="padding:4px;border:1px solid #ddd;">操作</th></tr>';
+                    historyData.data.slice(0, 10).forEach(r => {
+                        const flowMap = {'light':'少','medium':'中','heavy':'多'};
+                        html += `<tr>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.cycleStartDate}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.isInPeriod?'经期中':'否'}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">${flowMap[r.flowLevel]||'-'}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">${r.hasPain?'是':'否'}</td>
+                            <td style="padding:4px;border:1px solid #ddd;">
+                                <button onclick="editMenstrualRecord(${r.id}, '${r.cycleStartDate}', '${r.cycleEndDate||''}', '${r.flowLevel||''}', ${r.isInPeriod}, ${r.hasPain}, '${r.otherInfo||''}')" style="background:#FF9800;color:white;border:none;padding:4px 6px;border-radius:4px;cursor:pointer;margin-right:2px;font-size:14px;" title="编辑">✏️</button>
+                                <button onclick="deleteMenstrualRecord(${r.id})" style="background:#f44336;color:white;border:none;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:14px;" title="删除">🗑️</button>
+                            </td>
+                        </tr>`;
+                    });
+                    html += '</table>';
+                    document.getElementById('menstrualHistoryList').innerHTML = html;
+                } else {
+                    document.getElementById('menstrualHistoryList').innerHTML = '<div style="color:#999;font-size:13px;">暂无记录</div>';
+                }
+            } catch (e) {
+                document.getElementById('menstrualHistoryList').innerHTML = '<div style="color:#999;font-size:13px;">暂无记录</div>';
+            }
+
+            document.getElementById('menstrualModal').classList.add('active');
+        }
+
+        function onIsInPeriodChange(isInPeriod) {
+            updateCycleEndVisibility(isInPeriod);
+            // 如果选择"否"，显示最近一次经期的开始结束时间
+            if (isInPeriod === false && lastMenstrualRecord) {
+                document.getElementById('modalCycleStart').value = lastMenstrualRecord.cycleStartDate || '';
+                document.getElementById('modalCycleEnd').value = lastMenstrualRecord.cycleEndDate || '';
+            } else if (isInPeriod === true) {
+                // 选择"是"时，清空结束日期
+                document.getElementById('modalCycleEnd').value = '';
+            }
+        }
+
+        function updateCycleEndVisibility(isInPeriod) {
+            const container = document.getElementById('modalCycleEndContainer');
+            if (isInPeriod === true || isInPeriod === 'true') {
+                container.style.display = 'none';
+            } else {
+                container.style.display = 'block';
+            }
+        }
+
+        function hideMenstrualModal() {
+            document.getElementById('menstrualModal').classList.remove('active');
+        }
+
+        async function saveMenstrual() {
+            const cycleStartDate = document.getElementById('modalCycleStart').value || null;
+            const cycleEndDate = document.getElementById('modalCycleEnd').value || null;
+            const flowLevel = document.getElementById('modalFlowLevel').value || null;
+            const otherInfo = document.getElementById('modalOtherInfo').value || null;
+            const isInPeriod = document.querySelector('input[name="isInPeriod"]:checked')?.value === 'true' || false;
+            const hasPain = document.querySelector('input[name="hasPain"]:checked')?.value === 'true' || null;
+            const editId = document.getElementById('modalCycleStart').dataset.editId;
+
+            if (!cycleStartDate) {
+                alert('请选择经期开始日期');
+                return;
+            }
+
+            hideMenstrualModal();
+
+            try {
+                let res, data;
+                if (editId) {
+                    res = await fetch(`${API_BASE}/menstrual/${editId}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({userId, cycleStartDate, cycleEndDate, flowLevel, isInPeriod, hasPain, otherInfo})
+                    });
+                    data = await res.json();
+                    if (data.success) addMessage('经期更新成功！🩸', 'bot');
+                    else addMessage('更新失败，请重试～', 'bot');
+                    delete document.getElementById('modalCycleStart').dataset.editId;
+                } else {
+                    addMessage(`记录经期：${isInPeriod ? '经期中' : '非经期'} 开始${cycleStartDate}${cycleEndDate ? ' 至 ' + cycleEndDate : ''} 经量${flowLevel||'-'}`, 'user');
+                    res = await fetch(`${API_BASE}/menstrual`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({userId, cycleStartDate, cycleEndDate, flowLevel, isInPeriod, hasPain, otherInfo})
+                    });
+                    data = await res.json();
+                    if (data.success) addMessage('经期记录成功！🩸', 'bot');
+                    else addMessage('记录失败，请重试～', 'bot');
+                }
+                // 刷新后显示最新阶段
+                if (data.success) {
+                    try {
+                        const phaseRes = await fetch(`${API_BASE}/menstrual/${userId}/phase`);
+                        const phaseData = await phaseRes.json();
+                        if (phaseData.success && phaseData.data.phase) {
+                            const p = phaseData.data;
+                            addMessage(`📍 当前阶段：${p.phase}\n💪 运动建议：${p.exerciseRecommendation}\n🍽️ 饮食建议：${p.dietRecommendation}`, 'bot');
+                        }
+                    } catch (e) {}
+                }
+            } catch (e) {
+                addMessage('网络出错了～', 'bot');
+            }
+        }
+
+        function editMenstrualRecord(id, cycleStartDate, cycleEndDate, flowLevel, isInPeriod, hasPain, otherInfo) {
+            document.getElementById('modalCycleStart').value = cycleStartDate;
+            document.getElementById('modalCycleEnd').value = cycleEndDate || '';
+            document.getElementById('modalFlowLevel').value = flowLevel || '';
+            document.getElementById('modalOtherInfo').value = otherInfo || '';
+            document.querySelectorAll('input[name="isInPeriod"]').forEach(r => r.checked = r.value === String(isInPeriod));
+            document.querySelectorAll('input[name="hasPain"]').forEach(r => r.checked = r.value === String(hasPain));
+            updateCycleEndVisibility(isInPeriod);
+            document.getElementById('modalCycleStart').dataset.editId = id;
+            document.getElementById('modalCycleStart').scrollIntoView({behavior: 'smooth'});
+        }
+
+        async function deleteMenstrualRecord(id) {
+            if (!confirm('确认删除这条经期记录？')) return;
+            try {
+                const res = await fetch(`${API_BASE}/menstrual/${id}`, {method: 'DELETE'});
+                const data = await res.json();
+                if (data.success) {
+                    showMenstrualModal();
+                } else {
+                    alert('删除失败');
+                }
+            } catch (e) {
+                alert('删除失败');
+            }
+        }
+
+        async function init() {
+            try {
+                const res = await fetch(`${API_BASE}/user/getOrCreate?openid=default_user`);
+                const data = await res.json();
+                if (data.success) {
+                    userId = data.data.id;
+                    userData = data.data;
+                    updateUserInfo();
+                }
+            } catch (e) {
+                console.error('初始化失败:', e);
+                document.getElementById('userInfo').textContent = '连接失败，请检查后端服务';
+            }
+        }
+
+        function updateUserInfo() {
+            const info = document.getElementById('userInfo');
+            if (!userData) return;
+
+            let text = `欢迎 ${userData.nickname || '减减用户'}`;
+            if (userData.height) text += ` | 身高 ${userData.height}cm`;
+            if (userData.targetWeight) text += ` | 目标 ${userData.targetWeight}kg`;
+            info.textContent = text;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || !userId) return;
+
+            addMessage(message, 'user');
+            input.value = '';
+            setLoading(true);
+
+            try {
+                const res = await fetch(`${API_BASE}/chat/send`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({userId, message})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    addMessage(data.data.reply, 'bot');
+                } else {
+                    addMessage('抱歉出错了，请稍后再试～', 'bot');
+                }
+            } catch (e) {
+                console.error('发送失败:', e);
+                addMessage('抱歉网络出错了，请检查后端服务是否启动～', 'bot');
+            }
+
+            setLoading(false);
+            refreshUserData();
+        }
+
+        async function refreshUserData() {
+            try {
+                const res = await fetch(`${API_BASE}/user/${userId}`);
+                const data = await res.json();
+                if (data.success) {
+                    userData = data.data;
+                    updateUserInfo();
+                }
+            } catch (e) {
+                console.log('刷新用户信息失败');
+            }
+        }
+
+        function addMessage(content, type) {
+            const container = document.getElementById('chatContainer');
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = content;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+
+            const welcome = container.querySelector('.welcome');
+            if (welcome) welcome.remove();
+        }
+
+        function setLoading(loading) {
+            const btn = document.getElementById('sendBtn');
+            const input = document.getElementById('messageInput');
+            btn.disabled = loading;
+            input.disabled = loading;
+
+            if (loading) {
+                const container = document.getElementById('chatContainer');
+                const loadingMsg = document.createElement('div');
+                loadingMsg.className = 'message bot loading';
+                loadingMsg.id = 'loadingMsg';
+                loadingMsg.innerHTML = '<span class="typing-indicator"><span></span><span></span><span></span></span> 减减正在思考...';
+                container.appendChild(loadingMsg);
+                container.scrollTop = container.scrollHeight;
+            } else {
+                const loadingMsg = document.getElementById('loadingMsg');
+                if (loadingMsg) loadingMsg.remove();
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        init();
+    </script>
+
+    <!-- 档案弹窗 -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>我的档案</h2>
+                <button class="modal-close" onclick="hideProfileModal()">&times;</button>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-section-title">📋 基本信息</div>
+                <div class="profile-item">
+                    <label>昵称</label>
+                    <input type="text" id="modalNickname" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>年龄（岁）</label>
+                    <input type="number" id="modalAge" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>性别</label>
+                    <select id="modalGender">
+                        <option value="">请选择</option>
+                        <option value="1">男</option>
+                        <option value="2">女</option>
+                    </select>
+                </div>
+                <div class="profile-item">
+                    <label>身高（cm）</label>
+                    <input type="number" id="modalHeight" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>初始体重（kg）</label>
+                    <input type="number" step="0.1" id="modalInitialWeight" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>目标体重（kg）</label>
+                    <input type="number" step="0.1" id="modalTargetWeight" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>减重周期（天）</label>
+                    <input type="number" id="modalWeightLossPeriod" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>开始减重日期</label>
+                    <input type="date" id="modalStartWeightDate" placeholder="请选择">
+                </div>
+                <div class="profile-item">
+                    <label>饮食忌口</label>
+                    <input type="text" id="modalDietaryTaboo" placeholder="如：海鲜、辛辣、酒精">
+                </div>
+                <div class="profile-item">
+                    <label>睡眠时间</label>
+                    <select id="modalSleepStart">
+                        <option value="">请选择</option>
+                        <option value="21:00">21:00</option>
+                        <option value="21:30">21:30</option>
+                        <option value="22:00">22:00</option>
+                        <option value="22:30">22:30</option>
+                        <option value="23:00">23:00</option>
+                        <option value="23:30">23:30</option>
+                        <option value="00:00">00:00</option>
+                    </select>
+                </div>
+                <div class="profile-item">
+                    <label>起床时间</label>
+                    <select id="modalSleepEnd">
+                        <option value="">请选择</option>
+                        <option value="05:00">05:00</option>
+                        <option value="05:30">05:30</option>
+                        <option value="06:00">06:00</option>
+                        <option value="06:30">06:30</option>
+                        <option value="07:00">07:00</option>
+                        <option value="07:30">07:30</option>
+                        <option value="08:00">08:00</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-section-title">⏰ 提醒设置</div>
+                <div class="profile-toggle">
+                    <label>提醒记录</label>
+                    <div class="toggle-switch" id="modalReminderToggle" onclick="toggleReminder()"></div>
+                </div>
+                <div class="profile-item">
+                    <label>提醒频率</label>
+                    <select id="modalReminderInterval">
+                        <option value="12">每12小时</option>
+                        <option value="24">每24小时</option>
+                        <option value="48">每48小时</option>
+                        <option value="72">每3天</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="save-btn" onclick="saveProfile()">保存修改</button>
+        </div>
+    </div>
+
+    <!-- 体重记录弹窗 -->
+    <div class="modal" id="weightModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚖️ 体重记录</h2>
+                <button class="modal-close" onclick="hideWeightModal()">&times;</button>
+            </div>
+            <div class="profile-section">
+                <div class="profile-section-title">📝 今日记录</div>
+                <div class="profile-item">
+                    <label>日期</label>
+                    <input type="date" id="modalWeightDate">
+                </div>
+                <div class="profile-item">
+                    <label>体重（kg）</label>
+                    <input type="number" step="0.1" id="modalWeight" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>睡眠开始</label>
+                    <input type="time" id="modalWeightSleepStart" placeholder="如 22:00">
+                </div>
+                <div class="profile-item">
+                    <label>起床时间</label>
+                    <input type="time" id="modalWeightSleepEnd" placeholder="如 07:00">
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveWeight()">记录体重</button>
+
+            <div class="profile-section" style="margin-top: 16px;">
+                <div class="profile-section-title">📥 导入历史记录</div>
+                <div id="weightImportContainer">
+                    <div class="profile-item">
+                        <label>日期</label>
+                        <input type="date" id="modalWeightImportDate" style="flex:1">
+                    </div>
+                    <div class="profile-item">
+                        <label>体重（kg）</label>
+                        <input type="number" step="0.1" id="modalWeightImportWeight" placeholder="请输入" style="flex:1">
+                    </div>
+                    <button onclick="addWeightImportRow()" style="background:#4CAF50;color:white;border:none;padding:8px 16px;border-radius:8px;margin-top:8px;cursor:pointer;">+ 添加一行</button>
+                </div>
+                <div id="weightImportRows" style="margin-top:8px;"></div>
+                <button id="btnImportWeight" onclick="importWeightRecords()" style="background:#2196F3;color:white;border:none;padding:10px 20px;border-radius:8px;margin-top:12px;cursor:pointer;width:100%;display:none;">确认导入</button>
+            </div>
+
+            <div class="profile-section" style="margin-top: 16px;">
+                <div class="profile-section-title">📜 历史记录</div>
+                <div id="weightHistoryList" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 维度记录弹窗 -->
+    <div class="modal" id="measurementModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📏 身体维度记录</h2>
+                <button class="modal-close" onclick="hideMeasurementModal()">&times;</button>
+            </div>
+            <div class="profile-section">
+                <div class="profile-item">
+                    <label>日期</label>
+                    <input type="date" id="modalMeasurementDate">
+                </div>
+                <div class="profile-item">
+                    <label>腰围（cm）</label>
+                    <input type="number" step="0.1" id="modalWaist" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>臀围（cm）</label>
+                    <input type="number" step="0.1" id="modalHip" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>胸围（cm）</label>
+                    <input type="number" step="0.1" id="modalChest" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>上臂围（cm）</label>
+                    <input type="number" step="0.1" id="modalArm" placeholder="请输入">
+                </div>
+                <div class="profile-item">
+                    <label>大腿围（cm）</label>
+                    <input type="number" step="0.1" id="modalThigh" placeholder="请输入">
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveMeasurement()">记录维度</button>
+
+            <div class="profile-section" style="margin-top: 16px;">
+                <div class="profile-section-title">📜 历史记录</div>
+                <div id="measurementHistoryList" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 经期记录弹窗 -->
+    <div class="modal" id="menstrualModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🩸 经期记录</h2>
+                <button class="modal-close" onclick="hideMenstrualModal()">&times;</button>
+            </div>
+            <div id="menstrualPhaseInfo" style="background: #fff5f5; border-radius: 12px; padding: 16px; margin-bottom: 16px; font-size: 14px;"></div>
+            <div class="profile-section">
+                <div class="profile-item">
+                    <label>是否处于经期</label>
+                    <div style="display: flex; gap: 16px;">
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+                            <input type="radio" name="isInPeriod" value="true" id="modalIsInPeriodYes" onchange="onIsInPeriodChange(true)"> 是
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+                            <input type="radio" name="isInPeriod" value="false" id="modalIsInPeriodNo" onchange="onIsInPeriodChange(false)"> 否
+                        </label>
+                    </div>
+                </div>
+                <div class="profile-item">
+                    <label>经期开始日期</label>
+                    <input type="date" id="modalCycleStart">
+                </div>
+                <div class="profile-item" id="modalCycleEndContainer" style="display: none;">
+                    <label>经期结束日期</label>
+                    <input type="date" id="modalCycleEnd">
+                </div>
+                <div class="profile-item">
+                    <label>经量</label>
+                    <select id="modalFlowLevel">
+                        <option value="">请选择</option>
+                        <option value="light">少</option>
+                        <option value="medium">中</option>
+                        <option value="heavy">多</option>
+                    </select>
+                </div>
+                <div class="profile-item">
+                    <label>是否疼痛</label>
+                    <div style="display: flex; gap: 16px;">
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+                            <input type="radio" name="hasPain" value="true" id="modalHasPainYes"> 是
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+                            <input type="radio" name="hasPain" value="false" id="modalHasPainNo"> 否
+                        </label>
+                    </div>
+                </div>
+                <div class="profile-item">
+                    <label>其他信息（症状/备注）</label>
+                    <input type="text" id="modalOtherInfo" placeholder="如：腹胀、头痛、情绪波动等">
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveMenstrual()">记录经期</button>
+
+            <div class="profile-section" style="margin-top: 16px;">
+                <div class="profile-section-title">📜 历史记录</div>
+                <div id="menstrualHistoryList" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
