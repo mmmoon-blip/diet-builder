@@ -144,7 +144,7 @@ Page({
           } : null;
 
           this.setData({
-            dietHistory: res.data.data || [],
+            dietHistory: (res.data.data || []).reverse(),
             dietHasMore: res.data.data && res.data.data.length >= 7,
             todaySummary: todaySummary
           });
@@ -169,7 +169,7 @@ Page({
         if (res.data.success && res.data.data) {
           const newRecords = res.data.data.filter(r => !dietHistory.some(existing => existing.id === r.id));
           this.setData({
-            dietHistory: [...dietHistory, ...newRecords],
+            dietHistory: [...dietHistory, ...newRecords.reverse()],
             dietHasMore: newRecords.length >= 7
           });
         }

@@ -6,7 +6,9 @@ Page({
     inputText: '',
     messages: [],
     scrollTop: 0,
-    sessionId: ''  // AI对话会话ID
+    sessionId: '',  // AI对话会话ID
+    recording: false,
+    imagePath: ''
   },
 
   onLoad: function() {
@@ -64,6 +66,14 @@ Page({
 
   sendMessage: function() {
     const text = this.data.inputText.trim();
+    const imagePath = this.data.imagePath;
+
+    // 如果有图片，先发送带图片的消息
+    if (imagePath) {
+      this.sendMessageWithImage(text, imagePath);
+      return;
+    }
+
     if (!text) return;
 
     const token = wx.getStorageSync('token');
@@ -144,5 +154,177 @@ Page({
 
   onScrollUpper: function() {
     // 可以实现加载更多历史消息
+  },
+
+  // 选择图片
+  chooseImage: function() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        if (res.tempFiles && res.tempFiles.length > 0) {
+          this.setData({ imagePath: res.tempFiles[0].tempFilePath });
+        }
+      }
+    });
+  },
+
+  // 移除图片
+  removeImage: function() {
+    this.setData({ imagePath: '' });
+  },
+
+  // 切换语音录制
+  toggleVoiceRecord: function() {
+    if (this.data.recording) {
+      this.stopVoiceRecord();
+    } else {
+      this.startVoiceRecord();
+    }
+  },
+
+  // 开始录音
+  startVoiceRecord: function() {
+    wx.startRecord({
+      success: () => {
+        this.setData({ recording: true });
+      },
+      fail: (err) => {
+        wx.showToast({ title: '录音失败', icon: 'none' });
+        console.error('startRecord fail:', err);
+      }
+    });
+  },
+
+  // 停止录音
+  stopVoiceRecord: function() {
+    wx.stopRecord({
+      success: (res) => {
+        this.setData({ recording: false });
+        if (res.tempFilePath) {
+          this.sendVoiceMessage(res.tempFilePath);
+        }
+      },
+      fail: (err) => {
+        this.setData({ recording: false });
+        console.error('stopRecord fail:', err);
+      }
+    });
+  },
+
+  // 发送语音消息
+  sendVoiceMessage: function(filePath) {
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '上传中...' });
+
+    wx.uploadFile({
+      url: API_BASE + '/chat/voice',
+      filePath: filePath,
+      name: 'file',
+      header: {
+        'Authorization': 'Bearer ' + token
+      },
+      success: (res) => {
+        wx.hideLoading();
+        const data = JSON.parse(res.data);
+        if (data.success) {
+          const botMessage = {
+            id: Date.now() + 1,
+            role: 'bot',
+            content: data.data.reply,
+            time: this.formatTime(new Date())
+          };
+          const updatedMessages = [...this.data.messages, botMessage];
+          this.setData({
+            messages: updatedMessages,
+            scrollTop: this.data.scrollTop + 200
+          });
+          wx.setStorageSync('chatHistory', updatedMessages);
+        } else {
+          wx.showToast({ title: data.message || '发送失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        wx.hideLoading();
+        wx.showToast({ title: '上传失败', icon: 'none' });
+      }
+    });
+  },
+
+  // 发送带图片的消息
+  sendMessageWithImage: function(text, imagePath) {
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+
+    // 添加用户消息（带图片）
+    const userMessage = {
+      id: Date.now(),
+      role: 'user',
+      content: text || '[图片]',
+      imagePath: imagePath,
+      time: this.formatTime(new Date())
+    };
+
+    const messages = [...this.data.messages, userMessage];
+    this.setData({
+      messages: messages,
+      inputText: '',
+      imagePath: '',
+      scrollTop: this.data.scrollTop + 100
+    });
+
+    wx.setStorageSync('chatHistory', messages);
+    wx.showLoading({ title: '思考中...' });
+
+    const sessionId = this.data.sessionId;
+    const header = {
+      'Authorization': 'Bearer ' + token
+    };
+    if (sessionId) {
+      header['X-Session-Id'] = sessionId;
+    }
+
+    wx.uploadFile({
+      url: API_BASE + '/chat/sendWithImage',
+      filePath: imagePath,
+      name: 'image',
+      formData: {
+        message: text || ''
+      },
+      header: header,
+      success: (res) => {
+        wx.hideLoading();
+        const data = JSON.parse(res.data);
+        if (data.success) {
+          const botMessage = {
+            id: Date.now() + 1,
+            role: 'bot',
+            content: data.data.reply,
+            time: this.formatTime(new Date())
+          };
+          const updatedMessages = [...this.data.messages, botMessage];
+          this.setData({
+            messages: updatedMessages,
+            scrollTop: this.data.scrollTop + 200
+          });
+          wx.setStorageSync('chatHistory', updatedMessages);
+        } else {
+          wx.showToast({ title: data.message || 'AI回复失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        wx.hideLoading();
+        wx.showToast({ title: '网络错误', icon: 'none' });
+      }
+    });
   }
 });

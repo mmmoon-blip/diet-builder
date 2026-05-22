@@ -1,5 +1,5 @@
-// API 配置（localtunnel测试地址）
-const API_BASE = 'https://flat-badgers-hammer.loca.lt/api';
+// API 配置（本地开发）
+const API_BASE = 'http://localhost:8080/api';
 
 module.exports = {
   API_BASE

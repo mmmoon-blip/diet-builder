@@ -4,26 +4,48 @@
     <view class="header-top">
       <view class="header-left">
         <text class="title">减减 🤍</text>
+        <image class="ai-avatar" src="/assets/ai_avatar.png"></image>
         <text class="subtitle">您的私人定制减肥管家</text>
       </view>
       <view class="header-right">
         <text class="quick-btn" bindtap="showWeightModal">⚖️</text>
         <text class="quick-btn" bindtap="showMeasurementModal">📏</text>
         <text class="quick-btn" bindtap="showMenstrualModal">🩸</text>
-        <text class="quick-btn" bindtap="showProfileModal">👤</text>
+        <text class="quick-btn" bindtap="goToPage" data-page="/pages/profile/index">👤</text>
       </view>
     </view>
-    <view class="user-info-text" wx:if="{{userInfo.targetWeight || summaryLatest}}">
-      {{userInfo.nickname || '游客'}}
-      <text wx:if="{{summaryLatest}}"> | 当前 {{summaryLatest}}kg</text>
-      <text wx:if="{{userInfo.targetWeight}}"> | 目标 {{userInfo.targetWeight}}kg</text>
-      <text wx:if="{{summaryToGoal !== null && userInfo.targetWeight}}"> | 距目标 {{summaryToGoal > 0 ? summaryToGoal + 'kg' : '已达成'}}</text>
+    <!-- 减脂进度条 -->
+    <view class="weight-progress-bar" wx:if="{{summaryLatest}}">
+      <view class="progress-labels">
+        <text class="progress-start">{{userInfo.initialWeight || 0}}kg</text>
+        <text class="progress-current">
+          <text>{{summaryLatest}}kg</text>
+          <text class="change-tag" wx:if="{{summaryChangeFromLast}}">{{summaryChangeFromLast > 0 ? '较上次+' : '较上次'}}{{summaryChangeFromLast}}</text>
+        </text>
+        <text class="progress-target">{{userInfo.targetWeight || 0}}kg</text>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill completed" style="width: {{progressPercent || 0}}%"></view>
+        <view class="progress-fill remaining" style="width: {{100 - (progressPercent || 0)}}%"></view>
+        <view class="progress-marker current-marker" style="left: {{progressPercent || 0}}%"></view>
+      </view>
+      <view class="progress-info">
+        <text class="progress-text">已减{{summaryChangeAbs}}kg</text>
+        <text class="progress-percent">进度{{progressPercent || 0}}%</text>
+        <text class="progress-remain">距目标还差{{summaryToGoal}}kg</text>
+      </view>
     </view>
     <!-- 喝水量快捷入口 -->
     <view class="water-indicator" bindtap="showWaterModal">
       <text class="water-icon">💧</text>
       <text class="water-text">{{todayWater || 0}}ml</text>
       <text class="water-goal" wx:if="{{waterGoal}}">/ {{waterGoal}}ml</text>
+    </view>
+    <!-- 经期/卵泡期状态入口 -->
+    <view class="phase-indicator" bindtap="showMenstrualModal" wx:if="{{menstrualCurrentPhase}}">
+      <text class="phase-icon">🩸</text>
+      <text class="phase-text">{{menstrualCurrentPhase}}</text>
+      <text class="phase-day" wx:if="{{menstrualPhaseDay}}">第{{menstrualPhaseDay}}天</text>
     </view>
   </view>
 
@@ -54,8 +76,10 @@
         <text class="chart-tab {{measurementChartType === 'waist' ? 'active' : ''}}" data-type="waist" bindtap="switchMeasurementChart">腰围</text>
         <text class="chart-tab {{measurementChartType === 'hip' ? 'active' : ''}}" data-type="hip" bindtap="switchMeasurementChart">臀围</text>
         <text class="chart-tab {{measurementChartType === 'chest' ? 'active' : ''}}" data-type="chest" bindtap="switchMeasurementChart">胸围</text>
-        <text class="chart-tab {{measurementChartType === 'upperArm' ? 'active' : ''}}" data-type="upperArm" bindtap="switchMeasurementChart">大臂</text>
-        <text class="chart-tab {{measurementChartType === 'thigh' ? 'active' : ''}}" data-type="thigh" bindtap="switchMeasurementChart">大腿</text>
+        <text class="chart-tab {{measurementChartType === 'upperArm' ? 'active' : ''}}" data-type="upperArm" bindtap="switchMeasurementChart">大臂围</text>
+        <text class="chart-tab {{measurementChartType === 'forearm' ? 'active' : ''}}" data-type="forearm" bindtap="switchMeasurementChart">小臂围</text>
+        <text class="chart-tab {{measurementChartType === 'thigh' ? 'active' : ''}}" data-type="thigh" bindtap="switchMeasurementChart">大腿围</text>
+        <text class="chart-tab {{measurementChartType === 'calf' ? 'active' : ''}}" data-type="calf" bindtap="switchMeasurementChart">小腿围</text>
       </view>
       <!-- 维度记录数筛选 -->
       <view class="chart-tabs" wx:if="{{activeChart === 'measurement'}}">
@@ -86,7 +110,11 @@
           </view>
           <view class="data-container">
             <view class="line-connector">
-              <view wx:for="{{weightChartData}}" wx:key="index" class="line-segment-wrapper" style="left: {{item.xPercent}}%;bottom: {{item.yPercent}}%;"></view>
+              <block wx:if="{{weightChartData.length >= 2}}">
+                <view wx:for="{{weightChartData}}" wx:key="index" wx:if="{{!item.isLast}}" class="line-segment-wrapper" style="left: {{item.xPercent}}%;bottom: {{item.yPercent}}%;">
+                  <view class="connect-line" style="height: {{item.lineLength}}%;transform: rotate({{item.lineAngle}}deg);"></view>
+                </view>
+              </block>
             </view>
             <view wx:for="{{weightChartData}}" wx:key="index" class="data-point-wrapper" style="left: {{item.xPercent}}%; bottom: {{item.yPercent}}%;" bindtap="showWeightTooltip" data-item="{{item}}">
               <view class="data-point {{item.isToday ? 'today' : ''}} {{item.isLowest ? 'lowest' : ''}} {{item.isHighest ? 'highest' : ''}}"></view>
@@ -106,81 +134,81 @@
       <view class="chart-loading" wx:if="{{!weightChartLoaded}}">
         <view class="loading-spinner"></view><text>加载中...</text>
       </view>
-      <view class="stats-cards" wx:if="{{weightChartData.length > 0}}">
-        <view class="stat-card">
-          <view class="stat-value {{summaryChange < 0 ? 'down' : (summaryChange > 0 ? 'up' : '')}}">{{summaryChange !== null ? (summaryChange < 0 ? summaryChange + 'kg' : (summaryChange > 0 ? '+' + summaryChange + 'kg' : '0kg')) : '--'}}</view>
-          <view class="stat-label">累计变化(初始{{userInfo.initialWeight}}kg)</view>
-        </view>
-        <view class="stat-card highlight">
-          <view class="stat-value">{{summaryLatest}}kg</view>
-          <view class="stat-label">最新体重</view>
-        </view>
-        <view class="stat-card">
-          <view class="stat-value {{summaryChangeFromLast < 0 ? 'down' : (summaryChangeFromLast > 0 ? 'up' : '')}}">{{summaryChangeFromLast !== null ? (summaryChangeFromLast < 0 ? summaryChangeFromLast + 'kg' : (summaryChangeFromLast > 0 ? '+' + summaryChangeFromLast + 'kg' : '0kg')) : '--'}}</view>
-          <view class="stat-label">距上次</view>
-        </view>
-      </view>
     </view>
 
     <!-- 维度图表 -->
     <view wx:if="{{activeChart === 'measurement'}}">
-      <view class="chart-wrapper" wx:if="{{measurementChartData.length > 0}}">
-        <view class="chart-y-axis">
-          <text class="y-label">{{measurementChartMin}}</text>
-          <text class="y-label">{{measurementChartMid}}</text>
-          <text class="y-label">{{measurementChartMax}}</text>
-        </view>
-        <view class="chart-main">
-          <view class="grid-lines">
-            <view class="grid-line"></view>
-            <view class="grid-line"></view>
-            <view class="grid-line"></view>
+        <view class="chart-wrapper" wx:if="{{measurementChartData.length > 0}}">
+          <view class="chart-y-axis">
+            <text class="y-label">{{measurementChartMin}}</text>
+            <text class="y-label">{{measurementChartMid}}</text>
+            <text class="y-label">{{measurementChartMax}}</text>
           </view>
-          <view class="data-container">
-            <view class="line-connector measurement">
-              <view wx:for="{{measurementChartData}}" wx:key="index" class="line-segment-wrapper" style="left: {{item.xPercent}}%;bottom: {{item.yPercent}}%;"></view>
+          <view class="chart-main">
+            <view class="grid-lines">
+              <view class="grid-line"></view>
+              <view class="grid-line"></view>
+              <view class="grid-line"></view>
             </view>
-            <view wx:for="{{measurementChartData}}" wx:key="index" class="data-point-wrapper" style="left: {{item.xPercent}}%; bottom: {{item.yPercent}}%;" bindtap="showMeasurementTooltip" data-item="{{item}}">
-              <view class="data-point measurement {{item.isLowest ? 'lowest' : ''}} {{item.isHighest ? 'highest' : ''}}"></view>
-              <text class="point-label">{{item.value}}{{measurementChartUnit}}</text>
+            <view class="data-container">
+              <view class="line-connector measurement">
+                <block wx:if="{{measurementChartData.length >= 2}}">
+                  <view wx:for="{{measurementChartData}}" wx:key="index" wx:if="{{!item.isLast}}" class="line-segment-wrapper" style="left: {{item.xPercent}}%;bottom: {{item.yPercent}}%;">
+                    <view class="connect-line" style="height: {{item.lineLength}}%;transform: rotate({{item.lineAngle}}deg);"></view>
+                  </view>
+                </block>
+              </view>
+              <view wx:for="{{measurementChartData}}" wx:key="index" class="data-point-wrapper" style="left: {{item.xPercent}}%; bottom: {{item.yPercent}}%;" bindtap="showMeasurementTooltip" data-item="{{item}}">
+                <view class="data-point measurement {{item.isLowest ? 'lowest' : ''}} {{item.isHighest ? 'highest' : ''}}"></view>
+                <text class="point-label">{{item.value}}cm</text>
+              </view>
             </view>
           </view>
+          <view class="chart-x-axis">
+            <text wx:for="{{measurementChartLabels}}" wx:key="index" class="x-label" style="left: {{item.xPercent}}%;">{{item.label}}</text>
+          </view>
         </view>
-        <view class="chart-x-axis">
-          <text wx:for="{{measurementChartLabels}}" wx:key="index" class="x-label" style="left: {{item.xPercent}}%;">{{item.label}}</text>
+      <!-- 空状态/加载/统计 - 统一入口 -->
+      <block wx:if="{{measurementChartData.length === 0 && measurementChartLoaded}}">
+        <view class="chart-empty">
+          <view class="empty-icon">📏</view>
+          <text class="empty-text">暂无维度数据</text>
+          <text class="empty-hint">点击下方按钮记录</text>
         </view>
-      </view>
-      <view class="chart-empty" wx:elif="{{measurementChartData.length === 0 && measurementChartLoaded}}">
-        <view class="empty-icon">📏</view>
-        <text class="empty-text">暂无维度数据</text>
-        <text class="empty-hint">点击下方按钮记录</text>
-      </view>
+      </block>
       <view class="chart-loading" wx:if="{{!measurementChartLoaded}}">
         <view class="loading-spinner"></view><text>加载中...</text>
       </view>
-      <view class="stats-cards" wx:if="{{measurementChartData.length > 0}}">
-        <view class="stat-card highlight">
-          <view class="stat-value">{{measurementStats.current}}{{measurementChartUnit}}</view>
-          <view class="stat-label">当前{{measurementChartTypeName}}</view>
+      <block wx:if="{{measurementChartData.length > 0}}">
+        <view class="stats-cards">
+          <view class="stat-card highlight">
+            <view class="stat-value">{{measurementStats.current}}cm</view>
+            <view class="stat-label">当前{{measurementChartTypeName}}</view>
+          </view>
+          <view class="stat-card">
+            <view class="stat-value {{measurementStats.change <= 0 ? 'down' : 'up'}}">{{measurementStats.change >= 0 ? '+' : ''}}{{measurementStats.change}}cm</view>
+            <view class="stat-label">累计变化</view>
+          </view>
+          <view class="stat-card">
+            <view class="stat-value">{{measurementStats.avg}}cm</view>
+            <view class="stat-label">平均值</view>
+          </view>
         </view>
-        <view class="stat-card">
-          <view class="stat-value {{measurementStats.change <= 0 ? 'down' : 'up'}}">{{measurementStats.change >= 0 ? '+' : ''}}{{measurementStats.change}}{{measurementChartUnit}}</view>
-          <view class="stat-label">累计变化</view>
-        </view>
-        <view class="stat-card">
-          <view class="stat-value">{{measurementStats.avg}}{{measurementChartUnit}}</view>
-          <view class="stat-label">平均值</view>
-        </view>
-      </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- AI管家助手入口 -->
+  <view class="ai-assistant-banner" bindtap="goToPage" data-page="/pages/chat/index">
+    <image class="ai-assistant-avatar" src="/assets/ai_avatar1.png" mode="aspectFit"></image>
+    <view class="ai-speech-bubble">
+      <text class="ai-assistant-title">我是AI减减，你的专属减肥管家🤖</text>
+      <text class="ai-assistant-desc">陪你一起健康瘦下来～</text>
     </view>
   </view>
 
   <!-- 功能列表 -->
   <view class="function-grid">
-    <view class="function-item" bindtap="goToPage" data-page="/pages/chat/index">
-      <view class="function-icon">💬</view>
-      <text class="function-label">AI助手</text>
-    </view>
     <view class="function-item" bindtap="showWeightModal">
       <view class="function-icon">⚖️</view>
       <text class="function-label">体重记录</text>
@@ -204,14 +232,6 @@
     <view class="function-item" bindtap="goToPage" data-page="/pages/knowledge/index">
       <view class="function-icon">📚</view>
       <text class="function-label">知识库</text>
-    </view>
-    <view class="function-item" bindtap="showBfpModal">
-      <view class="function-icon">📊</view>
-      <text class="function-label">体脂估算</text>
-    </view>
-    <view class="function-item" bindtap="showProfileModal">
-      <view class="function-icon">👤</view>
-      <text class="function-label">个人档案</text>
     </view>
   </view>
 

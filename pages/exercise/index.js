@@ -193,7 +193,7 @@ Page({
           } : null;
 
           this.setData({
-            exerciseHistory: res.data.data || [],
+            exerciseHistory: (res.data.data || []).reverse(),
             exerciseHasMore: res.data.data && res.data.data.length >= 7,
             todaySummary: todaySummary
           });
@@ -218,7 +218,7 @@ Page({
         if (res.data.success && res.data.data) {
           const newRecords = res.data.data.filter(r => !exerciseHistory.some(existing => existing.id === r.id));
           this.setData({
-            exerciseHistory: [...exerciseHistory, ...newRecords],
+            exerciseHistory: [...exerciseHistory, ...newRecords.reverse()],
             exerciseHasMore: newRecords.length >= 7
           });
         }

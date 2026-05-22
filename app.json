@@ -2,6 +2,7 @@
   "pages": [
     "pages/login/index",
     "pages/index/index",
+    "pages/profile/index",
     "pages/exercise/index",
     "pages/diet/index",
     "pages/chat/index",

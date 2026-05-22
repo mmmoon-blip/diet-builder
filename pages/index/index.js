@@ -98,6 +98,7 @@ Page({
     // 新增经期详细字段
     menstrualCurrentPhase: '',
     menstrualCycleDay: null,
+    menstrualPhaseDay: null,
     menstrualNextPeriod: '',
     menstrualTip: '',
     menstrualIsInPeriod: false,
@@ -247,6 +248,19 @@ Page({
       const date = new Date(r.recordDate);
       const dateLabel = `${date.getMonth() + 1}/${date.getDate()}`;
 
+      // 计算连接线属性
+      let lineLength = 0;
+      let lineAngle = 0;
+      if (index < sorted.length - 1) {
+        const nextR = sorted[index + 1];
+        const nextXPercent = 8 + ((index + 1) / Math.max(sorted.length - 1, 1)) * 84;
+        const nextYPercent = ((nextR.weight - chartMin) / chartRange) * 100;
+        const dx = nextXPercent - xPercent;
+        const dy = nextYPercent - yPercent;
+        lineLength = Math.sqrt(dx * dx + dy * dy);
+        lineAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+      }
+
       return {
         ...r,
         xPercent,
@@ -254,31 +268,31 @@ Page({
         dateLabel,
         isToday: r.recordDate === new Date().toISOString().split('T')[0],
         isLowest: r.weight === minWeight,
-        isHighest: r.weight === maxWeight
+        isHighest: r.weight === maxWeight,
+        isLast: index === sorted.length - 1,
+        lineLength,
+        lineAngle
       };
     });
 
     // 计算统计摘要
     const latestWeight = sorted[sorted.length - 1].weight;
     const lastWeight = sorted.length > 1 ? sorted[sorted.length - 2].weight : latestWeight;
-    // 共减重 = 当前体重 - 初始体重（来自用户档案）
-    // 负数表示减重，正数表示增重
     const initialWeight = userInfo.initialWeight ? parseFloat(userInfo.initialWeight) : (sorted.length > 0 ? sorted[0].weight : latestWeight);
-    const totalChange = latestWeight - initialWeight;  // 当前 - 初始
+    const totalChange = latestWeight - initialWeight;
     const changeFromLast = latestWeight - lastWeight;
     const avgWeight = weights.reduce((a, b) => a + b, 0) / weights.length;
     let toGoal = null;
+    let progressPercent = null;
     if (userInfo.targetWeight) {
-      toGoal = latestWeight - userInfo.targetWeight;  // 距目标 = 当前体重 - 目标体重
+      toGoal = latestWeight - userInfo.targetWeight;
+      const totalToLose = initialWeight - userInfo.targetWeight;
+      const totalLost = initialWeight - latestWeight;
+      if (totalToLose > 0) {
+        progressPercent = Math.round((totalLost / totalToLose) * 100);
+        progressPercent = Math.max(0, Math.min(100, progressPercent));
+      }
     }
-
-    console.log('=== Weight Stats ===');
-    console.log('latestWeight:', latestWeight);
-    console.log('lastWeight:', lastWeight);
-    console.log('initialWeight from userInfo:', userInfo.initialWeight);
-    console.log('initialWeight used:', initialWeight);
-    console.log('totalChange:', totalChange);
-    console.log('sorted[0].weight:', sorted[0] ? sorted[0].weight : 'none');
 
     this.setData({
       weightChartData: chartData,
@@ -288,11 +302,13 @@ Page({
       weightChartMid: midValue.toFixed(1),
       lineHeight: 200,
       lineScaleY: 1,
-      summaryChange: (latestWeight - initialWeight).toFixed(1),  // 累计变化 = 当前 - 初始（负值表示减了）
-      summaryChangeFromLast: changeFromLast.toFixed(1),  // 距上次 = 当前 - 上次
+      summaryChange: (latestWeight - initialWeight).toFixed(1),
+      summaryChangeAbs: Math.abs(latestWeight - initialWeight).toFixed(1),
+      summaryChangeFromLast: changeFromLast.toFixed(1),
       summaryAvg: avgWeight.toFixed(1),
       summaryLatest: latestWeight.toFixed(1),
       summaryToGoal: toGoal !== null ? toGoal.toFixed(1) : null,
+      progressPercent: progressPercent,
       weightChartLoaded: true
     });
   },
@@ -377,7 +393,11 @@ Page({
         header: { 'Authorization': 'Bearer ' + token },
         success: (res) => {
           if (res.data.success && res.data.data) {
-            this.processMeasurementChartData(res.data.data, type, 'cm');
+            if (type === 'arm' || type === 'leg') {
+              this.processMultiMeasurementChartData(res.data.data, type, 'cm');
+            } else {
+              this.processMeasurementChartData(res.data.data, type, 'cm');
+            }
           } else {
             this.setData({ measurementChartData: [], measurementChartLoaded: true });
           }
@@ -401,7 +421,9 @@ Page({
       if (type === 'hip') return record.hip;
       if (type === 'chest') return record.chest;
       if (type === 'upperArm') return record.upperArm;
+      if (type === 'forearm') return record.forearm;
       if (type === 'thigh') return record.thigh;
+      if (type === 'calf') return record.calf;
       return null;
     };
 
@@ -439,6 +461,19 @@ Page({
       const date = new Date(r.recordDate);
       const dateLabel = `${date.getMonth() + 1}/${date.getDate()}`;
 
+      // 计算连接线属性
+      let lineLength = 0;
+      let lineAngle = 0;
+      if (index < sorted.length - 1) {
+        const nextR = sorted[index + 1];
+        const nextXPercent = 8 + ((index + 1) / Math.max(sorted.length - 1, 1)) * 84;
+        const nextYPercent = ((getValue(nextR) - chartMin) / chartRange) * 100;
+        const dx = nextXPercent - xPercent;
+        const dy = nextYPercent - yPercent;
+        lineLength = Math.sqrt(dx * dx + dy * dy);
+        lineAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+      }
+
       return {
         ...r,
         xPercent,
@@ -446,7 +481,10 @@ Page({
         value: value.toFixed(1),
         dateLabel,
         isLowest: value === minVal,
-        isHighest: value === maxVal
+        isHighest: value === maxVal,
+        isLast: index === sorted.length - 1,
+        lineLength,
+        lineAngle
       };
     });
 
@@ -456,7 +494,7 @@ Page({
     const totalChange = latestValue - firstValue;
     const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
 
-    const typeName = type === 'weight' ? '体重' : type === 'waist' ? '腰围' : type === 'hip' ? '臀围' : type === 'bust' ? '胸围' : type === 'arm' ? '大臂围' : type === 'thigh' ? '大腿围' : '';
+    const typeName = type === 'weight' ? '体重' : type === 'waist' ? '腰围' : type === 'hip' ? '臀围' : type === 'bust' ? '胸围' : type === 'upperArm' ? '大臂围' : type === 'forearm' ? '小臂围' : type === 'thigh' ? '大腿围' : type === 'calf' ? '小腿围' : '';
 
     this.setData({
       measurementChartData: chartData,
@@ -471,6 +509,93 @@ Page({
         avg: avgValue.toFixed(1)
       },
       measurementChartTypeName: typeName
+    });
+  },
+
+  processMultiMeasurementChartData(records, type, unit) {
+    if (!records || records.length === 0) {
+      this.setData({ measurementChartData: [], measurementChartLoaded: true, measurementChartData2: [], measurementChartLoaded2: true });
+      return;
+    }
+
+    const isArm = type === 'arm';
+    const field1 = isArm ? 'upperArm' : 'thigh';
+    const field2 = isArm ? 'forearm' : 'calf';
+
+    // 分别提取两组数据
+    const processField = (field) => {
+      const validRecords = records.filter(r => r[field] != null);
+      if (validRecords.length === 0) return null;
+
+      const sorted = [...validRecords].sort((a, b) => new Date(a.recordDate) - new Date(b.recordDate));
+      const values = sorted.map(r => r[field]);
+      const minVal = Math.min(...values);
+      const maxVal = Math.max(...values);
+      const range = maxVal - minVal || 10;
+      const chartMin = minVal - range * 0.15;
+      const chartMax = maxVal + range * 0.15;
+      const chartRange = chartMax - chartMin || 2;
+      const midValue = (chartMin + chartMax) / 2;
+
+      const chartData = sorted.map((r, index) => {
+        const xPercent = sorted.length === 1 ? 50 : (8 + (index / Math.max(sorted.length - 1, 1)) * 84);
+        const value = r[field];
+        const yPercent = ((value - chartMin) / chartRange) * 100;
+        const date = new Date(r.recordDate);
+        const dateLabel = `${date.getMonth() + 1}/${date.getDate()}`;
+
+        // 计算连接线属性
+        let lineLength = 0;
+        let lineAngle = 0;
+        if (index < sorted.length - 1) {
+          const nextR = sorted[index + 1];
+          const nextXPercent = 8 + ((index + 1) / Math.max(sorted.length - 1, 1)) * 84;
+          const nextYPercent = ((nextR[field] - chartMin) / chartRange) * 100;
+          const dx = nextXPercent - xPercent;
+          const dy = nextYPercent - yPercent;
+          lineLength = Math.sqrt(dx * dx + dy * dy);
+          lineAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+        }
+
+        return { ...r, xPercent, yPercent, value: value.toFixed(1), dateLabel, isLowest: value === minVal, isHighest: value === maxVal, isLast: index === sorted.length - 1, lineLength, lineAngle };
+      });
+
+      const latestValue = values[values.length - 1];
+      const firstValue = values[0];
+      return {
+        chartData,
+        chartMin: chartMin.toFixed(1),
+        chartMax: chartMax.toFixed(1),
+        chartMid: midValue.toFixed(1),
+        stats: {
+          current: latestValue.toFixed(1),
+          change: (latestValue - firstValue).toFixed(1),
+          avg: (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)
+        }
+      };
+    };
+
+    const data1 = processField(field1);
+    const data2 = processField(field2);
+
+    const typeName = isArm ? '臂围' : '腿围';
+    const subLabel = isArm ? '大臂/小臂' : '大腿/小腿';
+
+    this.setData({
+      measurementChartData: data1 ? data1.chartData : [],
+      measurementChartLabels: data1 ? this.generateMeasurementXAxisLabels(data1.chartData) : [],
+      measurementChartMin: data1 ? data1.chartMin : '0',
+      measurementChartMax: data1 ? data1.chartMax : '100',
+      measurementChartMid: data1 ? data1.chartMid : '50',
+      measurementChartLoaded: true,
+      measurementChartData2: data2 ? data2.chartData : [],
+      measurementChartMin2: data2 ? data2.chartMin : '0',
+      measurementChartMax2: data2 ? data2.chartMax : '100',
+      measurementChartMid2: data2 ? data2.chartMid : '50',
+      measurementChartLoaded2: true,
+      measurementStats: data1 ? data1.stats : { current: '--', change: '--', avg: '--' },
+      measurementChartTypeName: typeName,
+      measurementChartSubLabel: subLabel
     });
   },
 
@@ -539,7 +664,7 @@ Page({
       success: (res) => {
         if (res.data.success) {
           this.setData({
-            weightHistory: res.data.data || [],
+            weightHistory: (res.data.data || []).reverse(),
             weightHasMore: res.data.data && res.data.data.length >= 7
           });
         }
@@ -562,7 +687,7 @@ Page({
         if (res.data.success && res.data.data) {
           const newRecords = res.data.data.filter(r => !weightHistory.some(existing => existing.id === r.id));
           this.setData({
-            weightHistory: [...weightHistory, ...newRecords],
+            weightHistory: [...weightHistory, ...newRecords.reverse()],
             weightHasMore: newRecords.length >= 7
           });
         }
@@ -669,6 +794,7 @@ Page({
           this.setData({
             menstrualCurrentPhase: p.phase || '未知',
             menstrualCycleDay: p.cycleDay || null,
+            menstrualPhaseDay: p.phaseDay || null,
             menstrualNextPeriod: p.nextPeriodDate || '',
             menstrualTip: p.bodyStatus || '',
             menstrualIsInPeriod: p.isInPeriod || false,
@@ -774,6 +900,7 @@ Page({
           this.setData({
             menstrualCurrentPhase: p.phase || '未知',
             menstrualCycleDay: p.cycleDay || null,
+            menstrualPhaseDay: p.phaseDay || null,
             menstrualNextPeriod: p.nextPeriodDate || '',
             menstrualTip: p.bodyStatus || '',
             menstrualIsInPeriod: p.isInPeriod || false,
